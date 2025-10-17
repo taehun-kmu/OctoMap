@@ -151,6 +151,11 @@ void OctomapServerMultilayer::handlePreNodeTraversal(const rclcpp::Time & rostim
 
   OctomapServer::handlePreNodeTraversal(rostime);
 
+  // Update arm links from MoveIt2 planning scene (if enabled)
+  if (use_moveit_attached_objects_ && planning_scene_monitor_) {
+    updateArmLinksFromAttachedObjects();
+  }
+
   // If no arm links, use default arm layer height
   if (arm_links_.empty()) {
     RCLCPP_DEBUG(
@@ -325,6 +330,94 @@ void OctomapServerMultilayer::update2DMap(const OcTreeT::iterator & it, bool occ
       }
     }
   }
+}
+
+void OctomapServerMultilayer::attachedObjectCallback(
+  const moveit_msgs::msg::AttachedCollisionObject::ConstSharedPtr msg)
+{
+  if (msg->object.operation == moveit_msgs::msg::CollisionObject::ADD) {
+    RCLCPP_INFO(
+      get_logger(),
+      "Object '%s' attached to link '%s'",
+      msg->object.id.c_str(),
+      msg->link_name.c_str()
+    );
+
+    // Add to arm links list (check for duplicates)
+    if (std::find(arm_links_.begin(), arm_links_.end(), msg->link_name) == arm_links_.end()) {
+      arm_links_.push_back(msg->link_name);
+
+      // Set offset based on attached object size
+      double offset = 0.05;  // default
+      if (!msg->object.primitives.empty()) {
+        // Use first primitive's size
+        const auto & dims = msg->object.primitives[0].dimensions;
+        if (!dims.empty()) {
+          offset = *std::max_element(dims.begin(), dims.end()) / 2.0;
+        }
+      }
+      arm_link_offsets_.push_back(offset);
+
+      RCLCPP_INFO(
+        get_logger(),
+        "Added link '%s' with offset %.3f to tracking list",
+        msg->link_name.c_str(),
+        offset
+      );
+    }
+  } else if (msg->object.operation == moveit_msgs::msg::CollisionObject::REMOVE) {
+    // Remove from arm links
+    auto it = std::find(arm_links_.begin(), arm_links_.end(), msg->link_name);
+    if (it != arm_links_.end()) {
+      size_t idx = std::distance(arm_links_.begin(), it);
+      arm_links_.erase(it);
+      arm_link_offsets_.erase(arm_link_offsets_.begin() + idx);
+
+      RCLCPP_INFO(
+        get_logger(),
+        "Removed link '%s' from tracking list",
+        msg->link_name.c_str()
+      );
+    }
+  }
+}
+
+void OctomapServerMultilayer::updateArmLinksFromAttachedObjects()
+{
+  if (!planning_scene_monitor_) {
+    return;
+  }
+
+  // Lock planning scene (thread-safe access)
+  planning_scene_monitor::LockedPlanningSceneRO scene(planning_scene_monitor_);
+
+  // Get current attached objects
+  std::vector<moveit_msgs::msg::AttachedCollisionObject> attached_objects;
+  scene->getAttachedCollisionObjectMsgs(attached_objects);
+
+  // Rebuild arm links list
+  arm_links_.clear();
+  arm_link_offsets_.clear();
+
+  for (const auto & obj : attached_objects) {
+    arm_links_.push_back(obj.link_name);
+
+    // Calculate offset
+    double offset = 0.05;
+    if (!obj.object.primitives.empty()) {
+      const auto & dims = obj.object.primitives[0].dimensions;
+      if (!dims.empty()) {
+        offset = *std::max_element(dims.begin(), dims.end()) / 2.0;
+      }
+    }
+    arm_link_offsets_.push_back(offset);
+  }
+
+  RCLCPP_DEBUG(
+    get_logger(),
+    "Updated arm links from planning scene: %zu links",
+    arm_links_.size()
+  );
 }
 
 }  // namespace octomap_server
