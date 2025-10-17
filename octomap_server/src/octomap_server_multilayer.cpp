@@ -98,19 +98,28 @@ void OctomapServerMultilayer::handlePreNodeTraversal(const rclcpp::Time & rostim
 
   OctomapServer::handlePreNodeTraversal(rostime);
 
+  // If no arm links, use default arm layer height
+  if (arm_links_.empty()) {
+    RCLCPP_DEBUG(
+      get_logger(),
+      "No arm links available, using default arm layer height"
+    );
+    multi_gridmap_.at(2).min_z = declare_parameter("arm_layer.min_z", 0.7);
+    multi_gridmap_.at(2).max_z = declare_parameter("arm_layer.max_z", 0.9);
+    multi_gridmap_.at(2).z = (multi_gridmap_.at(2).min_z + multi_gridmap_.at(2).max_z) / 2.0;
+  } else {
+    // recalculate height of arm layer (stub, TODO)
+    geometry_msgs::msg::PointStamped vin;
+    vin.point.x = 0;
+    vin.point.y = 0;
+    vin.point.z = 0;
+    vin.header.stamp = rostime;
+    double link_padding = 0.03;
 
-  // recalculate height of arm layer (stub, TODO)
-  geometry_msgs::msg::PointStamped vin;
-  vin.point.x = 0;
-  vin.point.y = 0;
-  vin.point.z = 0;
-  vin.header.stamp = rostime;
-  double link_padding = 0.03;
+    double min_arm_height = 2.0;
+    double max_arm_height = 0.0;
 
-  double min_arm_height = 2.0;
-  double max_arm_height = 0.0;
-
-  for (size_t i = 0; i < arm_links_.size(); ++i) {
+    for (size_t i = 0; i < arm_links_.size(); ++i) {
     vin.header.frame_id = arm_links_[i];
     geometry_msgs::msg::PointStamped vout;
     geometry_msgs::msg::TransformStamped transform_stamped;
@@ -130,17 +139,18 @@ void OctomapServerMultilayer::handlePreNodeTraversal(const rclcpp::Time & rostim
       continue;
     }
     tf2::doTransform(vin, vout, transform_stamped);
-    max_arm_height = std::max(
-      max_arm_height, vout.point.z + (arm_link_offsets_.at(i) + link_padding));
-    min_arm_height = std::min(
-      min_arm_height, vout.point.z - (arm_link_offsets_.at(i) + link_padding));
+      max_arm_height = std::max(
+        max_arm_height, vout.point.z + (arm_link_offsets_.at(i) + link_padding));
+      min_arm_height = std::min(
+        min_arm_height, vout.point.z - (arm_link_offsets_.at(i) + link_padding));
+    }
+    RCLCPP_DEBUG(
+      get_logger(), "Arm layer interval adjusted to (%.3f, %.3f)", min_arm_height,
+      max_arm_height);
+    multi_gridmap_.at(2).min_z = min_arm_height;
+    multi_gridmap_.at(2).max_z = max_arm_height;
+    multi_gridmap_.at(2).z = (max_arm_height + min_arm_height) / 2.0;
   }
-  RCLCPP_INFO(
-    get_logger(), "Arm layer interval adjusted to (%f,%f)", min_arm_height,
-    max_arm_height);
-  multi_gridmap_.at(2).min_z = min_arm_height;
-  multi_gridmap_.at(2).max_z = max_arm_height;
-  multi_gridmap_.at(2).z = (max_arm_height + min_arm_height) / 2.0;
 
 
   // TODO(someone): also clear multilevel maps in BBX region (see OctomapServer.cpp)?
