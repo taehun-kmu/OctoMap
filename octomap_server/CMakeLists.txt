@@ -119,6 +119,17 @@ rclcpp_components_register_node(octomap_saver
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
+
+  # Catch2 test framework
+  find_package(ament_cmake_catch2 REQUIRED)
+  find_package(catch_ros2 REQUIRED)
+
+  # Test targets will be added here
+  # Example:
+  # ament_add_catch2_test(test_octomap_server
+  #   test/test_octomap_server.cpp
+  #   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  # )
 endif()
 
 ament_auto_package(
