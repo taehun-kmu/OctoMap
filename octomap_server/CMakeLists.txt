@@ -17,6 +17,11 @@ find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 find_package(OCTOMAP REQUIRED)
 
+# MoveIt2 dependencies for multilayer server
+find_package(moveit_core REQUIRED)
+find_package(moveit_msgs REQUIRED)
+find_package(moveit_ros_planning REQUIRED)
+
 ament_auto_add_library(octomap_server_static SHARED
   src/octomap_server_static.cpp
 )
@@ -58,6 +63,8 @@ ament_auto_add_library(octomap_server_multilayer SHARED
 target_link_libraries(octomap_server_multilayer
   ${OCTOMAP_LIBRARIES}
   ${PCL_LIBRARIES}
+  moveit_core::moveit_planning_scene
+  moveit_ros_planning::moveit_planning_scene_monitor
 )
 
 rclcpp_components_register_node(octomap_server_multilayer
