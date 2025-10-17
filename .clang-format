@@ -1,0 +1,85 @@
+---
+# ROS2 C++ Style Guide (Based on Google C++ Style)
+Language: Cpp
+BasedOnStyle: Google
+
+# ROS2 specific: 100 column limit instead of 80
+ColumnLimit: 100
+
+# Indentation
+IndentWidth: 2
+AccessModifierOffset: -2
+ConstructorInitializerIndentWidth: 0
+ContinuationIndentWidth: 2
+
+# Alignment
+AlignAfterOpenBracket: AlwaysBreak
+AlignConsecutiveAssignments: false
+AlignConsecutiveDeclarations: false
+AlignOperands: true
+AlignTrailingComments: true
+
+# Braces - Allman style (new line for better readability)
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterClass: true
+  AfterControlStatement: false
+  AfterEnum: true
+  AfterFunction: true
+  AfterNamespace: true
+  AfterStruct: true
+  AfterUnion: true
+  BeforeCatch: false
+  BeforeElse: false
+
+# Pointers and References - Middle alignment (ROS2 standard)
+DerivePointerAlignment: false
+PointerAlignment: Middle
+
+# Includes - Organized and sorted
+IncludeBlocks: Regroup
+IncludeCategories:
+  # C++ standard library (highest priority - must come first)
+  - Regex: '^<(algorithm|array|atomic|bitset|chrono|codecvt|complex|condition_variable|deque|exception|forward_list|fstream|functional|future|initializer_list|iomanip|ios|iosfwd|iostream|istream|iterator|limits|list|locale|map|memory|mutex|new|numeric|ostream|queue|random|ratio|regex|set|sstream|stack|stdexcept|streambuf|string|system_error|thread|tuple|type_traits|typeindex|typeinfo|unordered_map|unordered_set|utility|valarray|vector)>'
+    Priority: 1
+  # C standard library headers
+  - Regex: '^<.*\.h>'
+    Priority: 2
+  # Other system headers (octomap, pcl, etc.)
+  - Regex: '^<.*'
+    Priority: 3
+  # Project headers
+  - Regex: '.*'
+    Priority: 4
+SortIncludes: true
+SortUsingDeclarations: true
+
+# Spacing
+SpaceAfterCStyleCast: false
+SpaceAfterTemplateKeyword: true
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeParens: ControlStatements
+SpaceInEmptyParentheses: false
+SpacesInAngles: false
+SpacesInCStyleCastParentheses: false
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+
+# Line breaks
+AllowShortBlocksOnASingleLine: false
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AlwaysBreakAfterReturnType: None
+AlwaysBreakTemplateDeclarations: Yes
+BreakBeforeBinaryOperators: None
+BreakBeforeTernaryOperators: true
+BreakConstructorInitializers: BeforeColon
+BreakInheritanceList: BeforeColon
+
+# Comments
+ReflowComments: false
+
+# Other
+MaxEmptyLinesToKeep: 1
+KeepEmptyLinesAtTheStartOfBlocks: false
