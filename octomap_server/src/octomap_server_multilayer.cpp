@@ -43,22 +43,22 @@ OctomapServerMultilayer::OctomapServerMultilayer(const rclcpp::NodeOptions & nod
   // TODO(someone): param maps, limits
   // right now 0: base, 1: spine, 2: arms
   ProjectedMap m;
-  m.name = "projected_base_map";
-  m.min_z = 0.0;
-  m.max_z = 0.3;
-  m.z = 0.0;
+  m.name = declare_parameter("base_layer.name", "projected_base_map");
+  m.min_z = declare_parameter("base_layer.min_z", 0.0);
+  m.max_z = declare_parameter("base_layer.max_z", 0.3);
+  m.z = (m.min_z + m.max_z) / 2.0;
   multi_gridmap_.push_back(m);
 
-  m.name = "projected_spine_map";
-  m.min_z = 0.25;
-  m.max_z = 1.4;
-  m.z = 0.6;
+  m.name = declare_parameter("spine_layer.name", "projected_spine_map");
+  m.min_z = declare_parameter("spine_layer.min_z", 0.25);
+  m.max_z = declare_parameter("spine_layer.max_z", 1.4);
+  m.z = (m.min_z + m.max_z) / 2.0;
   multi_gridmap_.push_back(m);
 
-  m.name = "projected_arm_map";
-  m.min_z = 0.7;
-  m.max_z = 0.9;
-  m.z = 0.8;
+  m.name = declare_parameter("arm_layer.name", "projected_arm_map");
+  m.min_z = declare_parameter("arm_layer.min_z", 0.7);
+  m.max_z = declare_parameter("arm_layer.max_z", 0.9);
+  m.z = (m.min_z + m.max_z) / 2.0;
   multi_gridmap_.push_back(m);
 
   const auto qos = latched_topics_ ? rclcpp::QoS{5}.transient_local() : rclcpp::QoS{5};
