@@ -1,0 +1,102 @@
+---
+# ROS2 Clang-Tidy Configuration
+# Conservative whitelist approach: enable only necessary checks
+
+Checks: '-*,
+  bugprone-*,
+  clang-analyzer-*,
+  concurrency-*,
+  cppcoreguidelines-*,
+  hicpp-*,
+  linuxkernel-*,
+  modernize-*,
+  openmp-*,
+  performance-*,
+  -performance-unnecessary-value-param,
+  portability-*,
+  llvm-namespace-comment,
+  readability-named-parameter,
+  readability-redundant-smartptr-get,
+  readability-redundant-string-cstr,
+  readability-simplify-boolean-expr,
+  readability-container-size-empty,
+  readability-identifier-naming,
+  readability-function-size,
+  readability-magic-numbers,
+  '
+
+HeaderFilterRegex: '.*'
+AnalyzeTemporaryDtors: false
+
+CheckOptions:
+  # Namespace comments
+  - key: llvm-namespace-comment.ShortNamespaceLines
+    value: '10'
+  - key: llvm-namespace-comment.SpacesBeforeComments
+    value: '2'
+
+  # Braces
+  - key: readability-braces-around-statements.ShortStatementLines
+    value: '2'
+
+  # Type names (CamelCase)
+  - key: readability-identifier-naming.ClassCase
+    value: CamelCase
+  - key: readability-identifier-naming.StructCase
+    value: CamelCase
+  - key: readability-identifier-naming.EnumCase
+    value: CamelCase
+  - key: readability-identifier-naming.TemplateParameterCase
+    value: CamelCase
+
+  # Method/Function names (lower_case for ROS2 consistency)
+  - key: readability-identifier-naming.MethodCase
+    value: lower_case
+  - key: readability-identifier-naming.FunctionCase
+    value: lower_case
+
+  # Variable names (lower_case)
+  - key: readability-identifier-naming.VariableCase
+    value: lower_case
+  - key: readability-identifier-naming.ParameterCase
+    value: lower_case
+
+  # Member variables (trailing underscore)
+  - key: readability-identifier-naming.ClassMemberCase
+    value: lower_case
+  - key: readability-identifier-naming.PrivateMemberSuffix
+    value: '_'
+  - key: readability-identifier-naming.ProtectedMemberSuffix
+    value: '_'
+
+  # Constants (UPPER_CASE)
+  - key: readability-identifier-naming.EnumConstantCase
+    value: UPPER_CASE
+  - key: readability-identifier-naming.StaticConstantCase
+    value: UPPER_CASE
+  - key: readability-identifier-naming.ClassConstantCase
+    value: UPPER_CASE
+  - key: readability-identifier-naming.ConstexprVariableCase
+    value: UPPER_CASE
+  - key: readability-identifier-naming.MacroDefinitionCase
+    value: UPPER_CASE
+
+  # Function size limits (code quality enforcement)
+  - key: readability-function-size.LineThreshold
+    value: '80'
+  - key: readability-function-size.StatementThreshold
+    value: '100'
+  - key: readability-function-size.BranchThreshold
+    value: '15'
+  - key: readability-function-size.ParameterThreshold
+    value: '8'
+  - key: readability-function-size.NestingThreshold
+    value: '4'
+
+  # Modernization
+  - key: modernize-use-nullptr.NullMacros
+    value: 'NULL'
+
+  # Performance
+  - key: performance-move-const-arg.CheckTriviallyCopyableMove
+    value: false
