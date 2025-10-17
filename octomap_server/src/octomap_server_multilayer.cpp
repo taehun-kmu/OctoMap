@@ -37,8 +37,10 @@ namespace octomap_server
 OctomapServerMultilayer::OctomapServerMultilayer(const rclcpp::NodeOptions & node_options)
 : OctomapServer(node_options)
 {
-  // TODO(someone): callback for arm_navigation attached objects was removed, is
-  // there a replacement functionality?
+  // Declare parameters
+  use_moveit_attached_objects_ = declare_parameter("use_moveit_attached_objects", true);
+  robot_description_ = declare_parameter("robot_description", "robot_description");
+  planning_scene_topic_ = declare_parameter("planning_scene", "/planning_scene");
 
   // TODO(someone): param maps, limits
   // right now 0: base, 1: spine, 2: arms
@@ -65,6 +67,48 @@ OctomapServerMultilayer::OctomapServerMultilayer(const rclcpp::NodeOptions & nod
 
   for (size_t i = 0; i < multi_gridmap_.size(); ++i) {
     multi_map_pub_.push_back(create_publisher<OccupancyGrid>(multi_gridmap_.at(i).name, qos));
+  }
+
+  // MoveIt2 integration
+  if (use_moveit_attached_objects_) {
+    RCLCPP_INFO(get_logger(), "Initializing MoveIt2 PlanningSceneMonitor");
+
+    try {
+      // Create PlanningSceneMonitor
+      planning_scene_monitor_ =
+        std::make_shared<planning_scene_monitor::PlanningSceneMonitor>(
+          shared_from_this(),
+          robot_description_
+        );
+
+      // Start monitoring
+      planning_scene_monitor_->startSceneMonitor(planning_scene_topic_);
+      planning_scene_monitor_->startStateMonitor();
+
+      // Subscribe to attached collision objects
+      attached_object_sub_ = create_subscription<moveit_msgs::msg::AttachedCollisionObject>(
+        "/attached_collision_object",
+        10,
+        std::bind(
+          &OctomapServerMultilayer::attachedObjectCallback,
+          this,
+          std::placeholders::_1
+        )
+      );
+
+      RCLCPP_INFO(
+        get_logger(),
+        "MoveIt2 integration enabled - will track attached objects from planning scene"
+      );
+    } catch (const std::exception & ex) {
+      RCLCPP_ERROR(
+        get_logger(),
+        "Failed to initialize MoveIt2 integration: %s. Falling back to legacy mode.",
+        ex.what()
+      );
+      use_moveit_attached_objects_ = false;
+      planning_scene_monitor_.reset();
+    }
   }
 
   // init arm links (could be params as well)
