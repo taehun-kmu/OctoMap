@@ -1,0 +1,60 @@
+<!--
+  OctomapServerMultilayer launch file with MoveIt2 integration
+
+  This launch file starts the multilayer octomap server with MoveIt2
+  planning scene monitoring for dynamic attached object tracking.
+-->
+<launch>
+  <arg name="use_moveit" default="true"
+       description="Enable MoveIt2 integration for attached object tracking"/>
+  <arg name="robot_description" default="robot_description"
+       description="Name of the robot description parameter"/>
+  <arg name="planning_scene_topic" default="/planning_scene"
+       description="Planning scene topic to monitor"/>
+
+  <!-- OctomapServerMultilayer Node -->
+  <node pkg="octomap_server"
+        exec="octomap_server_multilayer_node"
+        name="octomap_multilayer"
+        output="screen">
+
+    <!-- Basic octomap parameters -->
+    <param name="resolution" value="0.05"/>
+    <param name="frame_id" value="map"/>
+    <param name="base_frame_id" value="base_footprint"/>
+    <param name="sensor_model.max_range" value="40.0"/>
+
+    <!-- Ground filtering -->
+    <param name="filter_ground_plane" value="true"/>
+    <param name="ground_filter.distance" value="0.04"/>
+    <param name="ground_filter.angle" value="0.15"/>
+    <param name="ground_filter.plane_distance" value="1.00"/>
+
+    <!-- Height filtering -->
+    <param name="point_cloud_min_z" value="-3.0"/>
+    <param name="point_cloud_max_z" value="1.5"/>
+    <param name="occupancy_min_z" value="0.1"/>
+    <param name="occupancy_max_z" value="1.0"/>
+
+    <!-- MoveIt2 integration parameters -->
+    <param name="use_moveit_attached_objects" value="$(var use_moveit)"/>
+    <param name="robot_description" value="$(var robot_description)"/>
+    <param name="planning_scene" value="$(var planning_scene_topic)"/>
+
+    <!-- Multilayer map configuration -->
+    <param name="base_layer.name" value="projected_base_map"/>
+    <param name="base_layer.min_z" value="0.0"/>
+    <param name="base_layer.max_z" value="0.3"/>
+
+    <param name="spine_layer.name" value="projected_spine_map"/>
+    <param name="spine_layer.min_z" value="0.25"/>
+    <param name="spine_layer.max_z" value="1.4"/>
+
+    <param name="arm_layer.name" value="projected_arm_map"/>
+    <param name="arm_layer.min_z" value="0.7"/>
+    <param name="arm_layer.max_z" value="0.9"/>
+
+    <!-- Point cloud input topic -->
+    <remap from="cloud_in" to="/cloud_registered"/>
+  </node>
+</launch>
