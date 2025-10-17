@@ -111,27 +111,36 @@ OctomapServerMultilayer::OctomapServerMultilayer(const rclcpp::NodeOptions & nod
     }
   }
 
-  // init arm links (could be params as well)
-  arm_links_.push_back("l_elbow_flex_link");
-  arm_link_offsets_.push_back(0.10);
-  arm_links_.push_back("l_gripper_l_finger_tip_link");
-  arm_link_offsets_.push_back(0.03);
-  arm_links_.push_back("l_gripper_r_finger_tip_link");
-  arm_link_offsets_.push_back(0.03);
-  arm_links_.push_back("l_upper_arm_roll_link");
-  arm_link_offsets_.push_back(0.16);
-  arm_links_.push_back("l_wrist_flex_link");
-  arm_link_offsets_.push_back(0.05);
-  arm_links_.push_back("r_elbow_flex_link");
-  arm_link_offsets_.push_back(0.10);
-  arm_links_.push_back("r_gripper_l_finger_tip_link");
-  arm_link_offsets_.push_back(0.03);
-  arm_links_.push_back("r_gripper_r_finger_tip_link");
-  arm_link_offsets_.push_back(0.03);
-  arm_links_.push_back("r_upper_arm_roll_link");
-  arm_link_offsets_.push_back(0.16);
-  arm_links_.push_back("r_wrist_flex_link");
-  arm_link_offsets_.push_back(0.05);
+  // Legacy mode: hardcoded arm links (PR2 robot)
+  if (!use_moveit_attached_objects_) {
+    RCLCPP_WARN(
+      get_logger(),
+      "Using legacy hardcoded arm links for PR2 robot "
+      "(set use_moveit_attached_objects=true for dynamic tracking)"
+    );
+
+    // init arm links (could be params as well)
+    arm_links_.push_back("l_elbow_flex_link");
+    arm_link_offsets_.push_back(0.10);
+    arm_links_.push_back("l_gripper_l_finger_tip_link");
+    arm_link_offsets_.push_back(0.03);
+    arm_links_.push_back("l_gripper_r_finger_tip_link");
+    arm_link_offsets_.push_back(0.03);
+    arm_links_.push_back("l_upper_arm_roll_link");
+    arm_link_offsets_.push_back(0.16);
+    arm_links_.push_back("l_wrist_flex_link");
+    arm_link_offsets_.push_back(0.05);
+    arm_links_.push_back("r_elbow_flex_link");
+    arm_link_offsets_.push_back(0.10);
+    arm_links_.push_back("r_gripper_l_finger_tip_link");
+    arm_link_offsets_.push_back(0.03);
+    arm_links_.push_back("r_gripper_r_finger_tip_link");
+    arm_link_offsets_.push_back(0.03);
+    arm_links_.push_back("r_upper_arm_roll_link");
+    arm_link_offsets_.push_back(0.16);
+    arm_links_.push_back("r_wrist_flex_link");
+    arm_link_offsets_.push_back(0.05);
+  }
 }
 
 void OctomapServerMultilayer::handlePreNodeTraversal(const rclcpp::Time & rostime)
