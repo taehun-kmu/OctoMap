@@ -28,8 +28,8 @@
 
 #include <octomap_server/octomap_server.hpp>
 
-#include <tf2_eigen/tf2_eigen.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_eigen/tf2_eigen.hpp>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include <algorithm>
 #include <limits>
@@ -431,7 +431,7 @@ void OctomapServer::insertCloudCallback(const PointCloud2::ConstSharedPtr cloud)
   PCLPointCloud pc_nonground;  // everything else
 
   if (filter_ground_plane_) {
-    
+
     // geometry_msgs::msg::TransformStamped sensor_to_base_transform_stamped;
     // geometry_msgs::msg::TransformStamped base_to_world_transform_stamped;
     // try {
@@ -458,7 +458,7 @@ void OctomapServer::insertCloudCallback(const PointCloud2::ConstSharedPtr cloud)
     //   tf2::transformToEigen(base_to_world_transform_stamped.transform).matrix().cast<float>();
 
     // transform pointcloud from sensor frame to fixed robot frame
-    
+
     // taeyoung fixed
     // pcl::transformPointCloud(pc, pc, sensor_to_base);
 
