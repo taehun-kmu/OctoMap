@@ -31,8 +31,12 @@
 
 #include <octomap_server/octomap_server.hpp>
 
+#include <moveit/planning_scene_monitor/planning_scene_monitor.h>
+#include <moveit_msgs/msg/attached_collision_object.hpp>
+
 #include <string>
 #include <vector>
+#include <memory>
 
 namespace octomap_server
 {
@@ -61,12 +65,28 @@ protected:
   /// hook that is called after traversing all nodes
   virtual void handlePostNodeTraversal(const rclcpp::Time & rostime);
 
+  /// callback for attached collision objects from MoveIt2
+  void attachedObjectCallback(
+    const moveit_msgs::msg::AttachedCollisionObject::ConstSharedPtr msg);
+
+  /// update arm links from attached objects in planning scene
+  void updateArmLinksFromAttachedObjects();
+
   std::vector<rclcpp::Publisher<OccupancyGrid>::SharedPtr> multi_map_pub_;
 
   std::vector<std::string> arm_links_;
   std::vector<double> arm_link_offsets_;
 
   MultilevelGrid multi_gridmap_;
+
+  // MoveIt2 integration
+  std::shared_ptr<planning_scene_monitor::PlanningSceneMonitor> planning_scene_monitor_;
+  rclcpp::Subscription<moveit_msgs::msg::AttachedCollisionObject>::SharedPtr attached_object_sub_;
+
+  // Parameters
+  bool use_moveit_attached_objects_;
+  std::string robot_description_;
+  std::string planning_scene_topic_;
 };
 }  // namespace octomap_server
 
