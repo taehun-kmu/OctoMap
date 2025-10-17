@@ -1,0 +1,42 @@
+repos:
+  # Basic file hygiene
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+        stages: [pre-commit]
+        exclude: ^(build/|FAST-LIO/Log/.*\.png|FAST-LIO/Log/.*\.txt|FAST-LIO/Log/.*\.csv|FAST-LIO/Log/.*\.pdf|PCD/.*\.pcd)
+      - id: end-of-file-fixer
+        stages: [pre-commit]
+        exclude: ^(build/|FAST-LIO/Log/.*\.png|FAST-LIO/Log/.*\.txt|FAST-LIO/Log/.*\.csv|FAST-LIO/Log/.*\.pdf|PCD/.*\.pcd)
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+        stages: [pre-commit]
+        exclude: ^(build/|FAST-LIO/Log/.*\.png|FAST-LIO/Log/.*\.txt|FAST-LIO/Log/.*\.csv|FAST-LIO/Log/.*\.pdf|PCD/.*\.pcd)
+      - id: check-merge-conflict
+        stages: [pre-commit]
+
+  # Security: Secret detection
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.28.0
+    hooks:
+      - id: gitleaks
+        stages: [pre-commit]
+        exclude: ^(build/|FAST-LIO/Log/.*\.png|FAST-LIO/Log/.*\.txt|FAST-LIO/Log/.*\.csv|FAST-LIO/Log/.*\.pdf|PCD/.*\.pcd)
+
+  # C++ formatting
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v19.1.6
+    hooks:
+      - id: clang-format
+        stages: [pre-commit]
+        types_or: [c++, c]
+        args: ['--style=file', '-i']
+        exclude: ^(build/|install/|log/)
+
+  # Commit message validation
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v4.3.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
