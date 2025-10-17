@@ -119,8 +119,15 @@ void OctomapServerMultilayer::handlePreNodeTraversal(const rclcpp::Time & rostim
         "base_footprint", arm_links_.at(i), rclcpp::Time(0),
         rclcpp::Duration::from_seconds(1.0));
     } catch (const tf2::TransformException & ex) {
-      RCLCPP_WARN(this->get_logger(), "%s", ex.what());
-      return;
+      RCLCPP_WARN_THROTTLE(
+        this->get_logger(),
+        *get_clock(),
+        5000,  // 5 seconds
+        "TF lookup failed for %s: %s",
+        arm_links_[i].c_str(),
+        ex.what()
+      );
+      continue;
     }
     tf2::doTransform(vin, vout, transform_stamped);
     max_arm_height = std::max(
