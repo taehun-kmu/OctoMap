@@ -124,12 +124,62 @@ if(BUILD_TESTING)
   find_package(ament_cmake_catch2 REQUIRED)
   find_package(catch_ros2 REQUIRED)
 
-  # Test targets will be added here
-  # Example:
-  # ament_add_catch2_test(test_octomap_server
-  #   test/test_octomap_server.cpp
-  #   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  # Helper macro for creating Catch2 tests
+  macro(octomap_add_catch2_test test_name test_source)
+    ament_add_catch2(${test_name}
+      ${test_source}
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    )
+    target_link_libraries(${test_name}
+      ${ARGN}
+    )
+    target_include_directories(${test_name}
+      PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/test
+    )
+  endmacro()
+
+  # Core OctomapServer tests
+  octomap_add_catch2_test(test_octomap_server_core
+    test/test_octomap_server_core.cpp
+    octomap_server
+    ${OCTOMAP_LIBRARIES}
+    ${PCL_LIBRARIES}
+  )
+
+  # OctomapServerStatic tests
+  octomap_add_catch2_test(test_octomap_server_static
+    test/test_octomap_server_static.cpp
+    octomap_server_static
+    ${OCTOMAP_LIBRARIES}
+    ${PCL_LIBRARIES}
+  )
+
+  # OctomapServerMultilayer tests (currently disabled due to linking issues)
+  # TODO: Fix tf2 linking for multilayer tests
+  # octomap_add_catch2_test(test_octomap_server_multilayer
+  #   test/test_octomap_server_multilayer.cpp
+  #   octomap_server_multilayer
+  #   ${OCTOMAP_LIBRARIES}
+  #   ${PCL_LIBRARIES}
+  #   moveit_core::moveit_planning_scene
+  #   moveit_ros_planning::moveit_planning_scene_monitor
   # )
+
+  # TrackingOctomapServer tests
+  octomap_add_catch2_test(test_tracking_octomap_server
+    test/test_tracking_octomap_server.cpp
+    tracking_octomap_server
+    ${OCTOMAP_LIBRARIES}
+    ${PCL_LIBRARIES}
+  )
+
+  # OctomapSaver tests
+  octomap_add_catch2_test(test_octomap_saver
+    test/test_octomap_saver.cpp
+    octomap_saver
+    ${OCTOMAP_LIBRARIES}
+  )
 endif()
 
 ament_auto_package(
