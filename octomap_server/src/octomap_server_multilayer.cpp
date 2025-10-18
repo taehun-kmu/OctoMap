@@ -147,8 +147,8 @@ void OctomapServerMultilayer::handlePreNodeTraversal(const rclcpp::Time& rostime
   // If no arm links, use default arm layer height
   if (arm_links_.empty()) {
     RCLCPP_DEBUG(get_logger(), "No arm links available, using default arm layer height");
-    multi_gridmap_.at(2).min_z = declare_parameter("arm_layer.min_z", 0.7);
-    multi_gridmap_.at(2).max_z = declare_parameter("arm_layer.max_z", 0.9);
+    multi_gridmap_.at(2).min_z = get_parameter("arm_layer.min_z").as_double();
+    multi_gridmap_.at(2).max_z = get_parameter("arm_layer.max_z").as_double();
     multi_gridmap_.at(2).z = (multi_gridmap_.at(2).min_z + multi_gridmap_.at(2).max_z) / 2.0;
   } else {
     // recalculate height of arm layer (stub, TODO)
