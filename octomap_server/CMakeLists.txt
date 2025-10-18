@@ -213,6 +213,14 @@ if(BUILD_TESTING)
     octomap_saver
     ${OCTOMAP_LIBRARIES}
   )
+
+  # OctomapServer PointCloud processing tests
+  octomap_add_catch2_test(test_octomap_server_pointcloud
+    test/test_octomap_server_pointcloud.cpp
+    octomap_server
+    ${OCTOMAP_LIBRARIES}
+    ${PCL_LIBRARIES}
+  )
 endif()
 
 ament_auto_package(
