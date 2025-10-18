@@ -2,15 +2,16 @@
 
 #define CATCH_CONFIG_MAIN
 #include <catch2/catch.hpp>
-#include <rclcpp/rclcpp.hpp>
 #include <octomap_server/octomap_server_multilayer.hpp>
+#include <rclcpp/rclcpp.hpp>
 
 #include "fixtures/test_fixtures.hpp"
 
 using namespace octomap_server;
 using namespace octomap_server::test;
 
-TEST_CASE("OctomapServerMultilayer constructor initializes correctly",
+TEST_CASE(
+  "OctomapServerMultilayer constructor initializes correctly",
   "[octomap_server_multilayer][constructor]")
 {
   ROS2Fixture ros_fixture;
@@ -19,15 +20,17 @@ TEST_CASE("OctomapServerMultilayer constructor initializes correctly",
   auto server = std::make_shared<OctomapServerMultilayer>(options);
 
   REQUIRE(server != nullptr);
-  CHECK(server->get_name() == std::string("octomap_server_multilayer"));
+  // OctomapServerMultilayer inherits from OctomapServer, so node name is "octomap_server"
+  CHECK(server->get_name() == std::string("octomap_server"));
 }
 
-TEST_CASE("OctomapServerMultilayer supports MoveIt2 integration",
-  "[octomap_server_multilayer][moveit2]")
+TEST_CASE(
+  "OctomapServerMultilayer supports MoveIt2 integration", "[octomap_server_multilayer][moveit2]")
 {
   ROS2Fixture ros_fixture;
 
-  SECTION("MoveIt2 mode enabled") {
+  SECTION("MoveIt2 mode enabled")
+  {
     rclcpp::NodeOptions options;
     options.append_parameter_override("use_moveit_attached_objects", true);
     options.append_parameter_override("robot_description", "test_robot");
@@ -38,7 +41,8 @@ TEST_CASE("OctomapServerMultilayer supports MoveIt2 integration",
     CHECK(server->get_parameter("use_moveit_attached_objects").as_bool() == true);
   }
 
-  SECTION("Legacy mode (MoveIt2 disabled)") {
+  SECTION("Legacy mode (MoveIt2 disabled)")
+  {
     rclcpp::NodeOptions options;
     options.append_parameter_override("use_moveit_attached_objects", false);
 
@@ -49,8 +53,8 @@ TEST_CASE("OctomapServerMultilayer supports MoveIt2 integration",
   }
 }
 
-TEST_CASE("OctomapServerMultilayer publishes multi-level maps",
-  "[octomap_server_multilayer][topics]")
+TEST_CASE(
+  "OctomapServerMultilayer publishes multi-level maps", "[octomap_server_multilayer][topics]")
 {
   ROS2Fixture ros_fixture;
 
@@ -63,7 +67,7 @@ TEST_CASE("OctomapServerMultilayer publishes multi-level maps",
 
   // Multilayer server should publish multiple 2D maps
   int map_publisher_count = 0;
-  for (const auto & [name, types] : topic_names) {
+  for (const auto& [name, types] : topic_names) {
     if (name.find("map") != std::string::npos) {
       map_publisher_count++;
     }
@@ -73,23 +77,27 @@ TEST_CASE("OctomapServerMultilayer publishes multi-level maps",
   CHECK(map_publisher_count > 0);
 }
 
-TEST_CASE("OctomapServerMultilayer layer configuration",
-  "[octomap_server_multilayer][parameters]")
+TEST_CASE("OctomapServerMultilayer layer configuration", "[octomap_server_multilayer][parameters]")
 {
   ROS2Fixture ros_fixture;
 
-  SECTION("Custom layer heights") {
+  SECTION("Custom layer heights")
+  {
     rclcpp::NodeOptions options;
-    options.append_parameter_override("ground_layer.min_z", 0.0);
-    options.append_parameter_override("ground_layer.max_z", 0.3);
+    options.append_parameter_override("base_layer.min_z", 0.0);
+    options.append_parameter_override("base_layer.max_z", 0.3);
+    options.append_parameter_override("spine_layer.min_z", 0.25);
+    options.append_parameter_override("spine_layer.max_z", 1.4);
     options.append_parameter_override("arm_layer.min_z", 0.7);
     options.append_parameter_override("arm_layer.max_z", 0.9);
 
     auto server = std::make_shared<OctomapServerMultilayer>(options);
     REQUIRE(server != nullptr);
 
-    CHECK(server->get_parameter("ground_layer.min_z").as_double() == Approx(0.0));
-    CHECK(server->get_parameter("ground_layer.max_z").as_double() == Approx(0.3));
+    CHECK(server->get_parameter("base_layer.min_z").as_double() == Approx(0.0));
+    CHECK(server->get_parameter("base_layer.max_z").as_double() == Approx(0.3));
+    CHECK(server->get_parameter("spine_layer.min_z").as_double() == Approx(0.25));
+    CHECK(server->get_parameter("spine_layer.max_z").as_double() == Approx(1.4));
     CHECK(server->get_parameter("arm_layer.min_z").as_double() == Approx(0.7));
     CHECK(server->get_parameter("arm_layer.max_z").as_double() == Approx(0.9));
   }
