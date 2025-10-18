@@ -26,15 +26,16 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
+#include "octomap_server/octomap_server_multilayer.hpp"
+
 #include <vector>
 
 #include "geometry_msgs/msg/point_stamped.hpp"
-
-#include "octomap_server/octomap_server_multilayer.hpp"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 
 namespace octomap_server
 {
-OctomapServerMultilayer::OctomapServerMultilayer(const rclcpp::NodeOptions & node_options)
+OctomapServerMultilayer::OctomapServerMultilayer(const rclcpp::NodeOptions& node_options)
 : OctomapServer(node_options)
 {
   // Declare parameters
@@ -75,11 +76,8 @@ OctomapServerMultilayer::OctomapServerMultilayer(const rclcpp::NodeOptions & nod
 
     try {
       // Create PlanningSceneMonitor
-      planning_scene_monitor_ =
-        std::make_shared<planning_scene_monitor::PlanningSceneMonitor>(
-          shared_from_this(),
-          robot_description_
-        );
+      planning_scene_monitor_ = std::make_shared<planning_scene_monitor::PlanningSceneMonitor>(
+        shared_from_this(), robot_description_);
 
       // Start monitoring
       planning_scene_monitor_->startSceneMonitor(planning_scene_topic_);
@@ -87,25 +85,16 @@ OctomapServerMultilayer::OctomapServerMultilayer(const rclcpp::NodeOptions & nod
 
       // Subscribe to attached collision objects
       attached_object_sub_ = create_subscription<moveit_msgs::msg::AttachedCollisionObject>(
-        "/attached_collision_object",
-        10,
-        std::bind(
-          &OctomapServerMultilayer::attachedObjectCallback,
-          this,
-          std::placeholders::_1
-        )
-      );
+        "/attached_collision_object", 10,
+        std::bind(&OctomapServerMultilayer::attachedObjectCallback, this, std::placeholders::_1));
 
       RCLCPP_INFO(
         get_logger(),
-        "MoveIt2 integration enabled - will track attached objects from planning scene"
-      );
-    } catch (const std::exception & ex) {
+        "MoveIt2 integration enabled - will track attached objects from planning scene");
+    } catch (const std::exception& ex) {
       RCLCPP_ERROR(
-        get_logger(),
-        "Failed to initialize MoveIt2 integration: %s. Falling back to legacy mode.",
-        ex.what()
-      );
+        get_logger(), "Failed to initialize MoveIt2 integration: %s. Falling back to legacy mode.",
+        ex.what());
       use_moveit_attached_objects_ = false;
       planning_scene_monitor_.reset();
     }
@@ -116,8 +105,7 @@ OctomapServerMultilayer::OctomapServerMultilayer(const rclcpp::NodeOptions & nod
     RCLCPP_WARN(
       get_logger(),
       "Using legacy hardcoded arm links for PR2 robot "
-      "(set use_moveit_attached_objects=true for dynamic tracking)"
-    );
+      "(set use_moveit_attached_objects=true for dynamic tracking)");
 
     // init arm links (could be params as well)
     arm_links_.push_back("l_elbow_flex_link");
@@ -143,7 +131,7 @@ OctomapServerMultilayer::OctomapServerMultilayer(const rclcpp::NodeOptions & nod
   }
 }
 
-void OctomapServerMultilayer::handlePreNodeTraversal(const rclcpp::Time & rostime)
+void OctomapServerMultilayer::handlePreNodeTraversal(const rclcpp::Time& rostime)
 {
   // multilayer server always publishes 2D maps:
   publish_2d_map_ = true;
@@ -158,10 +146,7 @@ void OctomapServerMultilayer::handlePreNodeTraversal(const rclcpp::Time & rostim
 
   // If no arm links, use default arm layer height
   if (arm_links_.empty()) {
-    RCLCPP_DEBUG(
-      get_logger(),
-      "No arm links available, using default arm layer height"
-    );
+    RCLCPP_DEBUG(get_logger(), "No arm links available, using default arm layer height");
     multi_gridmap_.at(2).min_z = declare_parameter("arm_layer.min_z", 0.7);
     multi_gridmap_.at(2).max_z = declare_parameter("arm_layer.max_z", 0.9);
     multi_gridmap_.at(2).z = (multi_gridmap_.at(2).min_z + multi_gridmap_.at(2).max_z) / 2.0;
@@ -178,38 +163,31 @@ void OctomapServerMultilayer::handlePreNodeTraversal(const rclcpp::Time & rostim
     double max_arm_height = 0.0;
 
     for (size_t i = 0; i < arm_links_.size(); ++i) {
-    vin.header.frame_id = arm_links_[i];
-    geometry_msgs::msg::PointStamped vout;
-    geometry_msgs::msg::TransformStamped transform_stamped;
-    try {
-      transform_stamped = tf2_buffer_->lookupTransform(
-        "base_footprint", arm_links_.at(i), rclcpp::Time(0),
-        rclcpp::Duration::from_seconds(1.0));
-    } catch (const tf2::TransformException & ex) {
-      RCLCPP_WARN_THROTTLE(
-        this->get_logger(),
-        *get_clock(),
-        5000,  // 5 seconds
-        "TF lookup failed for %s: %s",
-        arm_links_[i].c_str(),
-        ex.what()
-      );
-      continue;
-    }
-    tf2::doTransform(vin, vout, transform_stamped);
-      max_arm_height = std::max(
-        max_arm_height, vout.point.z + (arm_link_offsets_.at(i) + link_padding));
-      min_arm_height = std::min(
-        min_arm_height, vout.point.z - (arm_link_offsets_.at(i) + link_padding));
+      vin.header.frame_id = arm_links_[i];
+      geometry_msgs::msg::PointStamped vout;
+      geometry_msgs::msg::TransformStamped transform_stamped;
+      try {
+        transform_stamped = tf2_buffer_->lookupTransform(
+          "base_footprint", arm_links_.at(i), rclcpp::Time(0), rclcpp::Duration::from_seconds(1.0));
+      } catch (const tf2::TransformException& ex) {
+        RCLCPP_WARN_THROTTLE(
+          this->get_logger(), *get_clock(),
+          5000,  // 5 seconds
+          "TF lookup failed for %s: %s", arm_links_[i].c_str(), ex.what());
+        continue;
+      }
+      tf2::doTransform(vin, vout, transform_stamped);
+      max_arm_height =
+        std::max(max_arm_height, vout.point.z + (arm_link_offsets_.at(i) + link_padding));
+      min_arm_height =
+        std::min(min_arm_height, vout.point.z - (arm_link_offsets_.at(i) + link_padding));
     }
     RCLCPP_DEBUG(
-      get_logger(), "Arm layer interval adjusted to (%.3f, %.3f)", min_arm_height,
-      max_arm_height);
+      get_logger(), "Arm layer interval adjusted to (%.3f, %.3f)", min_arm_height, max_arm_height);
     multi_gridmap_.at(2).min_z = min_arm_height;
     multi_gridmap_.at(2).max_z = max_arm_height;
     multi_gridmap_.at(2).z = (max_arm_height + min_arm_height) / 2.0;
   }
-
 
   // TODO(someone): also clear multilevel maps in BBX region (see OctomapServer.cpp)?
 
@@ -230,42 +208,42 @@ void OctomapServerMultilayer::handlePreNodeTraversal(const rclcpp::Time & rostim
   }
 }
 
-void OctomapServerMultilayer::handlePostNodeTraversal(const rclcpp::Time & rostime)
+void OctomapServerMultilayer::handlePostNodeTraversal(const rclcpp::Time& rostime)
 {
-// TODO(someone): calc tall / short obs. cells for arm layer, => temp arm layer
-//  std::vector<int> shortObsCells;
-//  for(size_t int i=0; i<arm_map.data.size(); i++){
-//    if(temp_arm_map.data[i] == 0){
-//      if(map.data[i] == -1)
-//        arm_map.data[i] = -1;
-//    }
-//    else if(arm_map.data[i] == 0)
-//      arm_map.data[i] = 0;
-//    else if(double(arm_map.data[i])/temp_arm_map.data[i] > 0.8)
-//      arm_map.data[i] = 101;
-//    else{
-//      arm_map.data[i] = 100;
-//      shortObsCells.push_back(i);
-//    }
-//  }
-//
-//  std::vector<int> tallObsCells;
-//  tallObsCells.reserve(shortObsCells.size());
-//  int dxy[8] = { - arm_map.info.width - 1, -arm_map.info.width, - arm_map.info.width + 1, -1,
-//                 1, arm_map.info.width - 1, arm_map.info.width, arm_map.info.width + 1 };
-//  for(size_t int i=0; i<shortObsCells.size(); i++){
-//    for(int j=0; j<8; j++){
-//      int temp = shortObsCells[i]+dxy[j];
-//      if(temp<0 || temp>=arm_map.data.size())
-//        continue;
-//      if(arm_map.data[temp]==101){
-//        tallObsCells.push_back(shortObsCells[i]);
-//        break;
-//      }
-//    }
-//  }
-//  for(size_t int i=0; i<tallObsCells.size(); i++)
-//    arm_map.data[tallObsCells[i]] = 101;
+  // TODO(someone): calc tall / short obs. cells for arm layer, => temp arm layer
+  //  std::vector<int> shortObsCells;
+  //  for(size_t int i=0; i<arm_map.data.size(); i++){
+  //    if(temp_arm_map.data[i] == 0){
+  //      if(map.data[i] == -1)
+  //        arm_map.data[i] = -1;
+  //    }
+  //    else if(arm_map.data[i] == 0)
+  //      arm_map.data[i] = 0;
+  //    else if(double(arm_map.data[i])/temp_arm_map.data[i] > 0.8)
+  //      arm_map.data[i] = 101;
+  //    else{
+  //      arm_map.data[i] = 100;
+  //      shortObsCells.push_back(i);
+  //    }
+  //  }
+  //
+  //  std::vector<int> tallObsCells;
+  //  tallObsCells.reserve(shortObsCells.size());
+  //  int dxy[8] = { - arm_map.info.width - 1, -arm_map.info.width, - arm_map.info.width + 1, -1,
+  //                 1, arm_map.info.width - 1, arm_map.info.width, arm_map.info.width + 1 };
+  //  for(size_t int i=0; i<shortObsCells.size(); i++){
+  //    for(int j=0; j<8; j++){
+  //      int temp = shortObsCells[i]+dxy[j];
+  //      if(temp<0 || temp>=arm_map.data.size())
+  //        continue;
+  //      if(arm_map.data[temp]==101){
+  //        tallObsCells.push_back(shortObsCells[i]);
+  //        break;
+  //      }
+  //    }
+  //  }
+  //  for(size_t int i=0; i<tallObsCells.size(); i++)
+  //    arm_map.data[tallObsCells[i]] = 101;
 
   OctomapServer::handlePostNodeTraversal(rostime);
 
@@ -274,7 +252,7 @@ void OctomapServerMultilayer::handlePostNodeTraversal(const rclcpp::Time & rosti
   }
 }
 
-void OctomapServerMultilayer::update2DMap(const OcTreeT::iterator & it, bool occupied)
+void OctomapServerMultilayer::update2DMap(const OcTreeT::iterator& it, bool occupied)
 {
   double z = it.getZ();
   double s2 = it.getSize() / 2.0;
@@ -337,11 +315,8 @@ void OctomapServerMultilayer::attachedObjectCallback(
 {
   if (msg->object.operation == moveit_msgs::msg::CollisionObject::ADD) {
     RCLCPP_INFO(
-      get_logger(),
-      "Object '%s' attached to link '%s'",
-      msg->object.id.c_str(),
-      msg->link_name.c_str()
-    );
+      get_logger(), "Object '%s' attached to link '%s'", msg->object.id.c_str(),
+      msg->link_name.c_str());
 
     // Add to arm links list (check for duplicates)
     if (std::find(arm_links_.begin(), arm_links_.end(), msg->link_name) == arm_links_.end()) {
@@ -351,7 +326,7 @@ void OctomapServerMultilayer::attachedObjectCallback(
       double offset = 0.05;  // default
       if (!msg->object.primitives.empty()) {
         // Use first primitive's size
-        const auto & dims = msg->object.primitives[0].dimensions;
+        const auto& dims = msg->object.primitives[0].dimensions;
         if (!dims.empty()) {
           offset = *std::max_element(dims.begin(), dims.end()) / 2.0;
         }
@@ -359,11 +334,8 @@ void OctomapServerMultilayer::attachedObjectCallback(
       arm_link_offsets_.push_back(offset);
 
       RCLCPP_INFO(
-        get_logger(),
-        "Added link '%s' with offset %.3f to tracking list",
-        msg->link_name.c_str(),
-        offset
-      );
+        get_logger(), "Added link '%s' with offset %.3f to tracking list", msg->link_name.c_str(),
+        offset);
     }
   } else if (msg->object.operation == moveit_msgs::msg::CollisionObject::REMOVE) {
     // Remove from arm links
@@ -373,11 +345,7 @@ void OctomapServerMultilayer::attachedObjectCallback(
       arm_links_.erase(it);
       arm_link_offsets_.erase(arm_link_offsets_.begin() + idx);
 
-      RCLCPP_INFO(
-        get_logger(),
-        "Removed link '%s' from tracking list",
-        msg->link_name.c_str()
-      );
+      RCLCPP_INFO(get_logger(), "Removed link '%s' from tracking list", msg->link_name.c_str());
     }
   }
 }
@@ -399,13 +367,13 @@ void OctomapServerMultilayer::updateArmLinksFromAttachedObjects()
   arm_links_.clear();
   arm_link_offsets_.clear();
 
-  for (const auto & obj : attached_objects) {
+  for (const auto& obj : attached_objects) {
     arm_links_.push_back(obj.link_name);
 
     // Calculate offset
     double offset = 0.05;
     if (!obj.object.primitives.empty()) {
-      const auto & dims = obj.object.primitives[0].dimensions;
+      const auto& dims = obj.object.primitives[0].dimensions;
       if (!dims.empty()) {
         offset = *std::max_element(dims.begin(), dims.end()) / 2.0;
       }
@@ -413,11 +381,7 @@ void OctomapServerMultilayer::updateArmLinksFromAttachedObjects()
     arm_link_offsets_.push_back(offset);
   }
 
-  RCLCPP_DEBUG(
-    get_logger(),
-    "Updated arm links from planning scene: %zu links",
-    arm_links_.size()
-  );
+  RCLCPP_DEBUG(get_logger(), "Updated arm links from planning scene: %zu links", arm_links_.size());
 }
 
 }  // namespace octomap_server

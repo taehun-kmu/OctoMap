@@ -65,6 +65,7 @@ target_link_libraries(octomap_server_multilayer
   ${PCL_LIBRARIES}
   moveit_core::moveit_planning_scene
   moveit_ros_planning::moveit_planning_scene_monitor
+  tf2_geometry_msgs::tf2_geometry_msgs
 )
 
 rclcpp_components_register_node(octomap_server_multilayer
@@ -196,6 +197,7 @@ if(BUILD_TESTING)
   #   ${PCL_LIBRARIES}
   #   moveit_core::moveit_planning_scene
   #   moveit_ros_planning::moveit_planning_scene_monitor
+  #   tf2_geometry_msgs::tf2_geometry_msgs
   # )
 
   # TrackingOctomapServer tests
