@@ -29,8 +29,9 @@
 #ifndef OCTOMAP_SERVER__TEST__FIXTURES__TEST_FIXTURES_HPP_
 #define OCTOMAP_SERVER__TEST__FIXTURES__TEST_FIXTURES_HPP_
 
-#include <rclcpp/rclcpp.hpp>
 #include <memory>
+
+#include <rclcpp/rclcpp.hpp>
 
 namespace octomap_server
 {
@@ -59,10 +60,10 @@ public:
   }
 
   // Delete copy/move to enforce single initialization
-  ROS2Fixture(const ROS2Fixture &) = delete;
-  ROS2Fixture & operator=(const ROS2Fixture &) = delete;
-  ROS2Fixture(ROS2Fixture &&) = delete;
-  ROS2Fixture & operator=(ROS2Fixture &&) = delete;
+  ROS2Fixture(const ROS2Fixture&) = delete;
+  ROS2Fixture& operator=(const ROS2Fixture&) = delete;
+  ROS2Fixture(ROS2Fixture&&) = delete;
+  ROS2Fixture& operator=(ROS2Fixture&&) = delete;
 
 private:
   bool initialized_{false};

@@ -1,13 +1,14 @@
 // Copyright 2024, OctoMap-ROS2. All rights reserved.
 
 #define CATCH_CONFIG_MAIN
+#include <thread>
+
 #include <octomap/octomap.h>
 
 #include <catch2/catch.hpp>
 #include <filesystem>
 #include <octomap_server/octomap_server_static.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <thread>
 
 #include "fixtures/advanced_fixtures.hpp"
 #include "fixtures/test_fixtures.hpp"
