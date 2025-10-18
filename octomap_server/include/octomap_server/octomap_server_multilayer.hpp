@@ -71,6 +71,13 @@ protected:
   /// update arm links from attached objects in planning scene
   void updateArmLinksFromAttachedObjects();
 
+private:
+  /// Initialize MoveIt2 integration (called after construction via timer)
+  void initializeMoveIt2();
+
+  /// Initialize legacy hardcoded arm links (PR2 robot)
+  void initializeLegacyArmLinks();
+
   std::vector<rclcpp::Publisher<OccupancyGrid>::SharedPtr> multi_map_pub_;
 
   std::vector<std::string> arm_links_;

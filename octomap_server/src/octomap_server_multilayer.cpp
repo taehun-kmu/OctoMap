@@ -70,65 +70,79 @@ OctomapServerMultilayer::OctomapServerMultilayer(const rclcpp::NodeOptions& node
     multi_map_pub_.push_back(create_publisher<OccupancyGrid>(multi_gridmap_.at(i).name, qos));
   }
 
-  // MoveIt2 integration
+  // MoveIt2 integration - delayed initialization to avoid shared_from_this() in constructor
   if (use_moveit_attached_objects_) {
-    RCLCPP_INFO(get_logger(), "Initializing MoveIt2 PlanningSceneMonitor");
-
-    try {
-      // Create PlanningSceneMonitor
-      planning_scene_monitor_ = std::make_shared<planning_scene_monitor::PlanningSceneMonitor>(
-        shared_from_this(), robot_description_);
-
-      // Start monitoring
-      planning_scene_monitor_->startSceneMonitor(planning_scene_topic_);
-      planning_scene_monitor_->startStateMonitor();
-
-      // Subscribe to attached collision objects
-      attached_object_sub_ = create_subscription<moveit_msgs::msg::AttachedCollisionObject>(
-        "/attached_collision_object", 10,
-        std::bind(&OctomapServerMultilayer::attachedObjectCallback, this, std::placeholders::_1));
-
-      RCLCPP_INFO(
-        get_logger(),
-        "MoveIt2 integration enabled - will track attached objects from planning scene");
-    } catch (const std::exception& ex) {
-      RCLCPP_ERROR(
-        get_logger(), "Failed to initialize MoveIt2 integration: %s. Falling back to legacy mode.",
-        ex.what());
-      use_moveit_attached_objects_ = false;
-      planning_scene_monitor_.reset();
-    }
+    // Schedule initialization after constructor completes (when shared_ptr is established)
+    // Using 0ms timer ensures it runs ASAP but after object is fully constructed
+    auto init_timer =
+      create_wall_timer(std::chrono::milliseconds(0), [this]() { this->initializeMoveIt2(); });
+  } else {
+    // Legacy mode selected by parameter
+    initializeLegacyArmLinks();
   }
+}
 
-  // Legacy mode: hardcoded arm links (PR2 robot)
-  if (!use_moveit_attached_objects_) {
-    RCLCPP_WARN(
-      get_logger(),
-      "Using legacy hardcoded arm links for PR2 robot "
-      "(set use_moveit_attached_objects=true for dynamic tracking)");
+void OctomapServerMultilayer::initializeMoveIt2()
+{
+  RCLCPP_INFO(get_logger(), "Initializing MoveIt2 PlanningSceneMonitor");
 
-    // init arm links (could be params as well)
-    arm_links_.push_back("l_elbow_flex_link");
-    arm_link_offsets_.push_back(0.10);
-    arm_links_.push_back("l_gripper_l_finger_tip_link");
-    arm_link_offsets_.push_back(0.03);
-    arm_links_.push_back("l_gripper_r_finger_tip_link");
-    arm_link_offsets_.push_back(0.03);
-    arm_links_.push_back("l_upper_arm_roll_link");
-    arm_link_offsets_.push_back(0.16);
-    arm_links_.push_back("l_wrist_flex_link");
-    arm_link_offsets_.push_back(0.05);
-    arm_links_.push_back("r_elbow_flex_link");
-    arm_link_offsets_.push_back(0.10);
-    arm_links_.push_back("r_gripper_l_finger_tip_link");
-    arm_link_offsets_.push_back(0.03);
-    arm_links_.push_back("r_gripper_r_finger_tip_link");
-    arm_link_offsets_.push_back(0.03);
-    arm_links_.push_back("r_upper_arm_roll_link");
-    arm_link_offsets_.push_back(0.16);
-    arm_links_.push_back("r_wrist_flex_link");
-    arm_link_offsets_.push_back(0.05);
+  try {
+    // Create PlanningSceneMonitor - NOW safe to use shared_from_this()
+    planning_scene_monitor_ = std::make_shared<planning_scene_monitor::PlanningSceneMonitor>(
+      shared_from_this(), robot_description_);
+
+    // Start monitoring
+    planning_scene_monitor_->startSceneMonitor(planning_scene_topic_);
+    planning_scene_monitor_->startStateMonitor();
+
+    // Subscribe to attached collision objects
+    attached_object_sub_ = create_subscription<moveit_msgs::msg::AttachedCollisionObject>(
+      "/attached_collision_object", 10,
+      std::bind(&OctomapServerMultilayer::attachedObjectCallback, this, std::placeholders::_1));
+
+    RCLCPP_INFO(
+      get_logger(), "MoveIt2 integration enabled - tracking attached objects from planning scene");
+
+  } catch (const std::exception& ex) {
+    RCLCPP_ERROR(
+      get_logger(), "Failed to initialize MoveIt2 integration: %s. Falling back to legacy mode.",
+      ex.what());
+    use_moveit_attached_objects_ = false;
+    planning_scene_monitor_.reset();
+
+    // Fallback to legacy mode
+    initializeLegacyArmLinks();
   }
+}
+
+void OctomapServerMultilayer::initializeLegacyArmLinks()
+{
+  RCLCPP_WARN(
+    get_logger(),
+    "Using legacy hardcoded arm links for PR2 robot "
+    "(set use_moveit_attached_objects=true for dynamic tracking)");
+
+  // init arm links (could be params as well)
+  arm_links_.push_back("l_elbow_flex_link");
+  arm_link_offsets_.push_back(0.10);
+  arm_links_.push_back("l_gripper_l_finger_tip_link");
+  arm_link_offsets_.push_back(0.03);
+  arm_links_.push_back("l_gripper_r_finger_tip_link");
+  arm_link_offsets_.push_back(0.03);
+  arm_links_.push_back("l_upper_arm_roll_link");
+  arm_link_offsets_.push_back(0.16);
+  arm_links_.push_back("l_wrist_flex_link");
+  arm_link_offsets_.push_back(0.05);
+  arm_links_.push_back("r_elbow_flex_link");
+  arm_link_offsets_.push_back(0.10);
+  arm_links_.push_back("r_gripper_l_finger_tip_link");
+  arm_link_offsets_.push_back(0.03);
+  arm_links_.push_back("r_gripper_r_finger_tip_link");
+  arm_link_offsets_.push_back(0.03);
+  arm_links_.push_back("r_upper_arm_roll_link");
+  arm_link_offsets_.push_back(0.16);
+  arm_links_.push_back("r_wrist_flex_link");
+  arm_link_offsets_.push_back(0.05);
 }
 
 void OctomapServerMultilayer::handlePreNodeTraversal(const rclcpp::Time& rostime)
