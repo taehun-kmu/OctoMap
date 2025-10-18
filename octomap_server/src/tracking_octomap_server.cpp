@@ -26,12 +26,13 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#include <octomap_server/tracking_octomap_server.hpp>
 #include <string>
+
+#include <octomap_server/tracking_octomap_server.hpp>
 
 namespace octomap_server
 {
-TrackingOctomapServer::TrackingOctomapServer(const rclcpp::NodeOptions & node_options)
+TrackingOctomapServer::TrackingOctomapServer(const rclcpp::NodeOptions& node_options)
 : OctomapServer(node_options)
 {
   using std::placeholders::_1;
@@ -65,7 +66,7 @@ TrackingOctomapServer::TrackingOctomapServer(const rclcpp::NodeOptions & node_op
 }
 
 void TrackingOctomapServer::insertScan(
-  const tf2::Vector3 & sensor_origin, const PCLPointCloud & ground, const PCLPointCloud & nonground)
+  const tf2::Vector3& sensor_origin, const PCLPointCloud& ground, const PCLPointCloud& nonground)
 {
   OctomapServer::insertScan(sensor_origin, ground, nonground);
 
@@ -84,7 +85,7 @@ void TrackingOctomapServer::trackChanges()
   int c = 0;
   for (auto iter = start_pnt; iter != end_pnt; ++iter) {
     ++c;
-    octomap::OcTreeNode * node = octree_->search(iter->first);
+    octomap::OcTreeNode* node = octree_->search(iter->first);
 
     bool occupied = octree_->isNodeOccupied(node);
 
@@ -114,8 +115,7 @@ void TrackingOctomapServer::trackChanges()
 
     octree_->resetChangeDetection();
     RCLCPP_DEBUG(
-      get_logger(), "[server] octomap size after updating: %zu",
-      octree_->calcNumNodes());
+      get_logger(), "[server] octomap size after updating: %zu", octree_->calcNumNodes());
   }
 }
 
@@ -126,7 +126,7 @@ void TrackingOctomapServer::trackCallback(const PointCloud2::ConstSharedPtr clou
   RCLCPP_DEBUG(get_logger(), "[client] size of newly occupied cloud: %zu", cells.points.size());
 
   for (size_t i = 0; i < cells.points.size(); ++i) {
-    pcl::PointXYZI & pnt = cells.points[i];
+    pcl::PointXYZI& pnt = cells.points[i];
     octree_->updateNode(octree_->coordToKey(pnt.x, pnt.y, pnt.z), pnt.intensity, false);
   }
 
