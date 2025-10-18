@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.8)
 project(octomap_server)
 
 if(NOT CMAKE_CXX_STANDARD)
@@ -117,8 +117,40 @@ rclcpp_components_register_node(octomap_saver
 )
 
 if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
+  # Code quality tools with custom config files
+  find_package(ament_cmake_clang_format REQUIRED)
+  find_package(ament_cmake_clang_tidy REQUIRED)
+
+  ament_clang_format(
+    CONFIG_FILE ${CMAKE_CURRENT_SOURCE_DIR}/../.clang-format
+    "include"
+    "src"
+    "test"
+  )
+
+  ament_clang_tidy(
+    CONFIG_FILE ${CMAKE_CURRENT_SOURCE_DIR}/../.clang-tidy
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/test
+  )
+
+  # Complementary C++ static analysis
+  find_package(ament_cmake_cppcheck REQUIRED)
+  ament_cppcheck()
+
+  # Python linting (for scripts)
+  find_package(ament_cmake_pep257 REQUIRED)
+  ament_pep257()
+
+  # Standard linting tools
+  find_package(ament_cmake_copyright REQUIRED)
+  find_package(ament_cmake_lint_cmake REQUIRED)
+  find_package(ament_cmake_xmllint REQUIRED)
+
+  ament_copyright()
+  ament_lint_cmake()
+  ament_xmllint()
 
   # Catch2 test framework
   find_package(ament_cmake_catch2 REQUIRED)
