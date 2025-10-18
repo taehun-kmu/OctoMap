@@ -29,6 +29,7 @@
 #ifndef OCTOMAP_SERVER__TEST__FIXTURES__MOCK_POINTCLOUD_HPP_
 #define OCTOMAP_SERVER__TEST__FIXTURES__MOCK_POINTCLOUD_HPP_
 
+#include <array>
 #include <memory>
 #include <string>
 #include <vector>
@@ -37,6 +38,9 @@
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
 
+#include <cmath>
+#include <cstdlib>
+#include <rclcpp/clock.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 
