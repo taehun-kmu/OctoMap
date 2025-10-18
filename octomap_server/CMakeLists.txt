@@ -188,17 +188,16 @@ if(BUILD_TESTING)
     ${PCL_LIBRARIES}
   )
 
-  # OctomapServerMultilayer tests (currently disabled due to linking issues)
-  # TODO: Fix tf2 linking for multilayer tests
-  # octomap_add_catch2_test(test_octomap_server_multilayer
-  #   test/test_octomap_server_multilayer.cpp
-  #   octomap_server_multilayer
-  #   ${OCTOMAP_LIBRARIES}
-  #   ${PCL_LIBRARIES}
-  #   moveit_core::moveit_planning_scene
-  #   moveit_ros_planning::moveit_planning_scene_monitor
-  #   tf2_geometry_msgs::tf2_geometry_msgs
-  # )
+  # OctomapServerMultilayer tests
+  octomap_add_catch2_test(test_octomap_server_multilayer
+    test/test_octomap_server_multilayer.cpp
+    octomap_server_multilayer
+    ${OCTOMAP_LIBRARIES}
+    ${PCL_LIBRARIES}
+    moveit_core::moveit_planning_scene
+    moveit_ros_planning::moveit_planning_scene_monitor
+    tf2_geometry_msgs::tf2_geometry_msgs
+  )
 
   # TrackingOctomapServer tests
   octomap_add_catch2_test(test_tracking_octomap_server
