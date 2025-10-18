@@ -247,3 +247,120 @@ TEST_CASE("OctomapServer validates max_range parameter", "[octomap_server][param
     CHECK(server->get_parameter("sensor_model.max_range").as_double() == Approx(-1.0));
   }
 }
+
+// ==============================================================================
+// Service Callback Tests
+// ==============================================================================
+
+TEST_CASE("OctomapServer binary service callback", "[octomap_server][services]")
+{
+  ROS2Fixture ros_fixture;
+
+  rclcpp::NodeOptions options;
+  auto server = std::make_shared<OctomapServer>(options);
+
+  // Create service client
+  auto client = server->create_client<octomap_msgs::srv::GetOctomap>("octomap_binary");
+  REQUIRE(client->wait_for_service(std::chrono::seconds(1)));
+
+  // Call service
+  auto request = std::make_shared<octomap_msgs::srv::GetOctomap::Request>();
+  auto future = client->async_send_request(request);
+
+  // Wait for response
+  auto timeout = std::chrono::seconds(2);
+  REQUIRE(
+    rclcpp::spin_until_future_complete(server, future, timeout) ==
+    rclcpp::FutureReturnCode::SUCCESS);
+
+  auto response = future.get();
+  REQUIRE(response != nullptr);
+
+  // Binary map should be returned (even if empty)
+  CHECK(response->map.header.frame_id.length() > 0);
+}
+
+TEST_CASE("OctomapServer full service callback", "[octomap_server][services]")
+{
+  ROS2Fixture ros_fixture;
+
+  rclcpp::NodeOptions options;
+  auto server = std::make_shared<OctomapServer>(options);
+
+  // Create service client
+  auto client = server->create_client<octomap_msgs::srv::GetOctomap>("octomap_full");
+  REQUIRE(client->wait_for_service(std::chrono::seconds(1)));
+
+  // Call service
+  auto request = std::make_shared<octomap_msgs::srv::GetOctomap::Request>();
+  auto future = client->async_send_request(request);
+
+  // Wait for response
+  auto timeout = std::chrono::seconds(2);
+  REQUIRE(
+    rclcpp::spin_until_future_complete(server, future, timeout) ==
+    rclcpp::FutureReturnCode::SUCCESS);
+
+  auto response = future.get();
+  REQUIRE(response != nullptr);
+
+  // Full map should be returned (even if empty)
+  CHECK(response->map.header.frame_id.length() > 0);
+}
+
+TEST_CASE("OctomapServer reset service callback", "[octomap_server][services]")
+{
+  ROS2Fixture ros_fixture;
+
+  rclcpp::NodeOptions options;
+  auto server = std::make_shared<OctomapServer>(options);
+
+  // Create service client
+  auto client = server->create_client<std_srvs::srv::Empty>("~/reset");
+  REQUIRE(client->wait_for_service(std::chrono::seconds(1)));
+
+  // Call reset service
+  auto request = std::make_shared<std_srvs::srv::Empty::Request>();
+  auto future = client->async_send_request(request);
+
+  // Wait for response
+  auto timeout = std::chrono::seconds(2);
+  REQUIRE(
+    rclcpp::spin_until_future_complete(server, future, timeout) ==
+    rclcpp::FutureReturnCode::SUCCESS);
+
+  auto response = future.get();
+  CHECK(response != nullptr);
+}
+
+TEST_CASE("OctomapServer clear_bbox service callback", "[octomap_server][services]")
+{
+  ROS2Fixture ros_fixture;
+
+  rclcpp::NodeOptions options;
+  auto server = std::make_shared<OctomapServer>(options);
+
+  // Create service client
+  auto client = server->create_client<octomap_msgs::srv::BoundingBoxQuery>("~/clear_bbox");
+  REQUIRE(client->wait_for_service(std::chrono::seconds(1)));
+
+  // Call service with a bounding box
+  auto request = std::make_shared<octomap_msgs::srv::BoundingBoxQuery::Request>();
+  request->min.x = -1.0;
+  request->min.y = -1.0;
+  request->min.z = -1.0;
+  request->max.x = 1.0;
+  request->max.y = 1.0;
+  request->max.z = 1.0;
+
+  auto future = client->async_send_request(request);
+
+  // Wait for response
+  auto timeout = std::chrono::seconds(2);
+  REQUIRE(
+    rclcpp::spin_until_future_complete(server, future, timeout) ==
+    rclcpp::FutureReturnCode::SUCCESS);
+
+  auto response = future.get();
+  CHECK(response != nullptr);
+}
