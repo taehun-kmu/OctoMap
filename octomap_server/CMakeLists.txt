@@ -229,6 +229,14 @@ if(BUILD_TESTING)
     ${OCTOMAP_LIBRARIES}
     ${PCL_LIBRARIES}
   )
+
+  # OctomapServer tree traversal tests
+  octomap_add_catch2_test(test_octomap_server_traversal
+    test/test_octomap_server_traversal.cpp
+    octomap_server
+    ${OCTOMAP_LIBRARIES}
+    ${PCL_LIBRARIES}
+  )
 endif()
 
 ament_auto_package(
