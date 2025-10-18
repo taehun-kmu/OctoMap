@@ -1,17 +1,20 @@
 // Copyright 2024, OctoMap-ROS2. All rights reserved.
 
 #define CATCH_CONFIG_MAIN
-#include <catch2/catch.hpp>
-#include <rclcpp/rclcpp.hpp>
-#include <octomap_server/octomap_server_static.hpp>
+#include <octomap/octomap.h>
 
+#include <catch2/catch.hpp>
+#include <octomap_server/octomap_server_static.hpp>
+#include <rclcpp/rclcpp.hpp>
+
+#include "fixtures/advanced_fixtures.hpp"
 #include "fixtures/test_fixtures.hpp"
 
 using namespace octomap_server;
 using namespace octomap_server::test;
 
-TEST_CASE("OctomapServerStatic constructor initializes correctly",
-  "[octomap_server_static][constructor]")
+TEST_CASE(
+  "OctomapServerStatic constructor initializes correctly", "[octomap_server_static][constructor]")
 {
   ROS2Fixture ros_fixture;
 
@@ -22,12 +25,13 @@ TEST_CASE("OctomapServerStatic constructor initializes correctly",
   CHECK(server->get_name() == std::string("octomap_server_static"));
 }
 
-TEST_CASE("OctomapServerStatic loads static map from file parameter",
-  "[octomap_server_static][file_io]")
+TEST_CASE(
+  "OctomapServerStatic loads static map from file parameter", "[octomap_server_static][file_io]")
 {
   ROS2Fixture ros_fixture;
 
-  SECTION("Non-existent file parameter") {
+  SECTION("Non-existent file parameter")
+  {
     rclcpp::NodeOptions options;
     options.append_parameter_override("map_file", "/nonexistent/map.ot");
 
@@ -36,7 +40,8 @@ TEST_CASE("OctomapServerStatic loads static map from file parameter",
     // Server should initialize but log error about missing file
   }
 
-  SECTION("Empty file parameter") {
+  SECTION("Empty file parameter")
+  {
     rclcpp::NodeOptions options;
     options.append_parameter_override("map_file", "");
 
@@ -45,21 +50,28 @@ TEST_CASE("OctomapServerStatic loads static map from file parameter",
   }
 }
 
-TEST_CASE("OctomapServerStatic provides octomap services",
-  "[octomap_server_static][services]")
+TEST_CASE("OctomapServerStatic provides octomap services", "[octomap_server_static][services]")
 {
   ROS2Fixture ros_fixture;
+  TempFileFixture temp_fixture;
+
+  // Create a simple octomap file
+  octomap::OcTree tree(0.1);
+  tree.updateNode(octomap::point3d(0, 0, 0), true);
+  auto map_file = temp_fixture.get_temp_dir() / "test_map.ot";
+  tree.write(map_file.string());
 
   rclcpp::NodeOptions options;
+  options.append_parameter_override("octomap_path", map_file.string());
   auto server = std::make_shared<OctomapServerStatic>(options);
 
-  rclcpp::spin_some(server);
-
+  // Services are created in constructor, no need to spin
   auto service_names = server->get_service_names_and_types();
 
-  SECTION("Binary octomap service exists") {
+  SECTION("Binary octomap service exists")
+  {
     bool found = false;
-    for (const auto & [name, types] : service_names) {
+    for (const auto& [name, types] : service_names) {
       if (name.find("octomap_binary") != std::string::npos) {
         found = true;
         break;
@@ -68,9 +80,10 @@ TEST_CASE("OctomapServerStatic provides octomap services",
     CHECK(found);
   }
 
-  SECTION("Full octomap service exists") {
+  SECTION("Full octomap service exists")
+  {
     bool found = false;
-    for (const auto & [name, types] : service_names) {
+    for (const auto& [name, types] : service_names) {
       if (name.find("octomap_full") != std::string::npos) {
         found = true;
         break;
@@ -80,8 +93,8 @@ TEST_CASE("OctomapServerStatic provides octomap services",
   }
 }
 
-TEST_CASE("OctomapServerStatic does not subscribe to point clouds",
-  "[octomap_server_static][topics]")
+TEST_CASE(
+  "OctomapServerStatic does not subscribe to point clouds", "[octomap_server_static][topics]")
 {
   ROS2Fixture ros_fixture;
 
@@ -94,7 +107,7 @@ TEST_CASE("OctomapServerStatic does not subscribe to point clouds",
 
   // Static server should NOT subscribe to cloud_in (it's static!)
   bool found_cloud_sub = false;
-  for (const auto & [name, types] : topic_names) {
+  for (const auto& [name, types] : topic_names) {
     if (name.find("cloud_in") != std::string::npos) {
       found_cloud_sub = true;
       break;
