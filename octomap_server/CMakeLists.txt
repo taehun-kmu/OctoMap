@@ -221,6 +221,14 @@ if(BUILD_TESTING)
     ${OCTOMAP_LIBRARIES}
     ${PCL_LIBRARIES}
   )
+
+  # OctomapServer 2D projection tests
+  octomap_add_catch2_test(test_octomap_server_2d_projection
+    test/test_octomap_server_2d_projection.cpp
+    octomap_server
+    ${OCTOMAP_LIBRARIES}
+    ${PCL_LIBRARIES}
+  )
 endif()
 
 ament_auto_package(
