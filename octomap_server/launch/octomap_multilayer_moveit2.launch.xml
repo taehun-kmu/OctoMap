@@ -3,14 +3,51 @@
 
   This launch file starts the multilayer octomap server with MoveIt2
   planning scene monitoring for dynamic attached object tracking.
+
+  USAGE MODES:
+
+  1. Standalone with URDF file:
+     ros2 launch octomap_server octomap_multilayer_moveit2.launch.xml \
+       robot_urdf_file:=/path/to/robot.urdf.xacro
+
+  2. With robot_state_publisher already running:
+     ros2 launch octomap_server octomap_multilayer_moveit2.launch.xml \
+       use_robot_state_publisher:=true
+
+  3. Legacy mode (no MoveIt2, uses hardcoded PR2 links):
+     ros2 launch octomap_server octomap_multilayer_moveit2.launch.xml \
+       use_moveit:=false
+
+  REQUIREMENTS:
+  - For MoveIt2 integration, robot_description must contain valid URDF XML
+  - Without valid URDF, server falls back to legacy hardcoded arm links
+  - Requires xacro package if using .xacro files
 -->
 <launch>
   <arg name="use_moveit" default="true"
        description="Enable MoveIt2 integration for attached object tracking"/>
-  <arg name="robot_description" default="robot_description"
+
+  <!-- URDF loading options -->
+  <arg name="robot_urdf_file" default=""
+       description="Path to URDF/xacro file (if provided, loads URDF content)"/>
+  <arg name="use_robot_state_publisher" default="false"
+       description="If true, wait for robot_description from robot_state_publisher"/>
+
+  <!-- Parameter name for robot description -->
+  <arg name="robot_description_param" default="robot_description"
        description="Name of the robot description parameter"/>
   <arg name="planning_scene_topic" default="/planning_scene"
        description="Planning scene topic to monitor"/>
+
+  <!-- Load robot URDF if file path provided -->
+  <let name="robot_description_content"
+       value="$(command 'xacro $(var robot_urdf_file)')"
+       if="$(eval '$(var robot_urdf_file) != &quot;&quot;')"/>
+
+  <!-- Use empty string if no file provided (rely on robot_state_publisher) -->
+  <let name="robot_description_content"
+       value=""
+       unless="$(eval '$(var robot_urdf_file) != &quot;&quot;')"/>
 
   <!-- OctomapServerMultilayer Node -->
   <node pkg="octomap_server"
@@ -38,7 +75,15 @@
 
     <!-- MoveIt2 integration parameters -->
     <param name="use_moveit_attached_objects" value="$(var use_moveit)"/>
-    <param name="robot_description" value="$(var robot_description)"/>
+
+    <!-- If URDF file provided, use processed content -->
+    <param name="robot_description" value="$(var robot_description_content)"
+           if="$(eval '$(var robot_urdf_file) != &quot;&quot;')"/>
+
+    <!-- If using robot_state_publisher, use parameter name for subscription -->
+    <param name="robot_description" value="$(var robot_description_param)"
+           if="$(eval '$(var use_robot_state_publisher) and $(var robot_urdf_file) == &quot;&quot;')"/>
+
     <param name="planning_scene" value="$(var planning_scene_topic)"/>
 
     <!-- Multilayer map configuration -->
