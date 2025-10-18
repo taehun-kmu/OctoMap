@@ -161,6 +161,7 @@ void OctomapServerMultilayer::handlePreNodeTraversal(const rclcpp::Time& rostime
 
     double min_arm_height = 2.0;
     double max_arm_height = 0.0;
+    bool any_transform_succeeded = false;
 
     for (size_t i = 0; i < arm_links_.size(); ++i) {
       vin.header.frame_id = arm_links_[i];
@@ -181,12 +182,20 @@ void OctomapServerMultilayer::handlePreNodeTraversal(const rclcpp::Time& rostime
         std::max(max_arm_height, vout.point.z + (arm_link_offsets_.at(i) + link_padding));
       min_arm_height =
         std::min(min_arm_height, vout.point.z - (arm_link_offsets_.at(i) + link_padding));
+      any_transform_succeeded = true;
     }
-    RCLCPP_DEBUG(
-      get_logger(), "Arm layer interval adjusted to (%.3f, %.3f)", min_arm_height, max_arm_height);
-    multi_gridmap_.at(2).min_z = min_arm_height;
-    multi_gridmap_.at(2).max_z = max_arm_height;
-    multi_gridmap_.at(2).z = (max_arm_height + min_arm_height) / 2.0;
+    if (any_transform_succeeded) {
+      RCLCPP_DEBUG(
+        get_logger(), "Arm layer interval adjusted to (%.3f, %.3f)", min_arm_height,
+        max_arm_height);
+      multi_gridmap_.at(2).min_z = min_arm_height;
+      multi_gridmap_.at(2).max_z = max_arm_height;
+      multi_gridmap_.at(2).z = (max_arm_height + min_arm_height) / 2.0;
+    } else {
+      RCLCPP_WARN_THROTTLE(
+        get_logger(), *get_clock(), 5000,
+        "All TF lookups failed for arm links, keeping previous arm layer bounds");
+    }
   }
 
   // TODO(someone): also clear multilevel maps in BBX region (see OctomapServer.cpp)?
