@@ -29,15 +29,16 @@
 #ifndef OCTOMAP_SERVER__TEST__FIXTURES__MOCK_POINTCLOUD_HPP_
 #define OCTOMAP_SERVER__TEST__FIXTURES__MOCK_POINTCLOUD_HPP_
 
-#include <sensor_msgs/msg/point_cloud2.hpp>
-#include <sensor_msgs/point_cloud2_iterator.hpp>
+#include <memory>
+#include <string>
+#include <vector>
+
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
 
-#include <memory>
-#include <string>
-#include <vector>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+#include <sensor_msgs/point_cloud2_iterator.hpp>
 
 namespace octomap_server
 {
@@ -58,9 +59,7 @@ public:
    * @return Shared pointer to generated PointCloud2
    */
   static sensor_msgs::msg::PointCloud2::SharedPtr createSimpleCloud(
-    size_t num_points = 100,
-    const std::string & frame_id = "base_link",
-    double spacing = 0.1)
+    size_t num_points = 100, const std::string& frame_id = "base_link", double spacing = 0.1)
   {
     auto cloud = std::make_shared<sensor_msgs::msg::PointCloud2>();
     cloud->header.frame_id = frame_id;
@@ -97,8 +96,7 @@ public:
    * @return Shared pointer to generated colored PointCloud2
    */
   static sensor_msgs::msg::PointCloud2::SharedPtr createColoredCloud(
-    size_t num_points = 100,
-    const std::string & frame_id = "base_link")
+    size_t num_points = 100, const std::string& frame_id = "base_link")
   {
     pcl::PointCloud<pcl::PointXYZRGB> pcl_cloud;
     pcl_cloud.width = num_points;
@@ -134,10 +132,8 @@ public:
    * @return Shared pointer to generated PointCloud2
    */
   static sensor_msgs::msg::PointCloud2::SharedPtr createBoxCloud(
-    const std::array<double, 3> & min_point,
-    const std::array<double, 3> & max_point,
-    size_t num_points = 1000,
-    const std::string & frame_id = "base_link")
+    const std::array<double, 3>& min_point, const std::array<double, 3>& max_point,
+    size_t num_points = 1000, const std::string& frame_id = "base_link")
   {
     auto cloud = std::make_shared<sensor_msgs::msg::PointCloud2>();
     cloud->header.frame_id = frame_id;
@@ -170,7 +166,7 @@ public:
    * @return Shared pointer to empty PointCloud2
    */
   static sensor_msgs::msg::PointCloud2::SharedPtr createEmptyCloud(
-    const std::string & frame_id = "base_link")
+    const std::string& frame_id = "base_link")
   {
     auto cloud = std::make_shared<sensor_msgs::msg::PointCloud2>();
     cloud->header.frame_id = frame_id;
