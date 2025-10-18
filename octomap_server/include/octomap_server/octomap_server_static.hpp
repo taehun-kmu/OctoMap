@@ -29,13 +29,13 @@
 #ifndef OCTOMAP_SERVER__OCTOMAP_SERVER_STATIC_HPP_
 #define OCTOMAP_SERVER__OCTOMAP_SERVER_STATIC_HPP_
 
-#include <octomap/octomap.h>
-
 #include <memory>
 #include <string>
 
-#include "rclcpp/rclcpp.hpp"
+#include <octomap/octomap.h>
+
 #include "octomap_msgs/srv/get_octomap.hpp"
+#include "rclcpp/rclcpp.hpp"
 
 namespace octomap_server
 {
@@ -44,7 +44,7 @@ using octomap_msgs::srv::GetOctomap;
 class OctomapServerStatic : public rclcpp::Node
 {
 public:
-  explicit OctomapServerStatic(const rclcpp::NodeOptions & node_options);
+  explicit OctomapServerStatic(const rclcpp::NodeOptions& node_options);
 
 private:
   bool onOctomapBinarySrv(

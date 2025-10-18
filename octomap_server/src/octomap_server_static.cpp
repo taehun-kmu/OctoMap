@@ -26,17 +26,17 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#include <octomap_server/octomap_server_static.hpp>
-
-#include <octomap_msgs/conversions.h>
-
 #include <memory>
 #include <string>
 #include <utility>
 
+#include <octomap_msgs/conversions.h>
+
+#include <octomap_server/octomap_server_static.hpp>
+
 namespace octomap_server
 {
-OctomapServerStatic::OctomapServerStatic(const rclcpp::NodeOptions & node_options)
+OctomapServerStatic::OctomapServerStatic(const rclcpp::NodeOptions& node_options)
 : Node("octomap_server_static", node_options)
 {
   using std::placeholders::_1;
@@ -60,7 +60,7 @@ OctomapServerStatic::OctomapServerStatic(const rclcpp::NodeOptions & node_option
     }
 
     octree_ = std::unique_ptr<octomap::AbstractOccupancyOcTree>(
-      dynamic_cast<octomap::AbstractOccupancyOcTree *>(tree.release()));
+      dynamic_cast<octomap::AbstractOccupancyOcTree*>(tree.release()));
   } else {
     RCLCPP_ERROR(get_logger(), "Octree file does not have .bt or .ot extension");
     return;

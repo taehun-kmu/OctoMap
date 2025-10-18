@@ -26,26 +26,24 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#include <octomap_server/octomap_server.hpp>
-
-#include <tf2_eigen/tf2_eigen.hpp>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
-
 #include <algorithm>
 #include <limits>
 #include <memory>
 #include <string>
 #include <vector>
 
+#include <octomap_server/octomap_server.hpp>
+#include <tf2_eigen/tf2_eigen.hpp>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+
 namespace
 {
-template<typename T>
-bool update_param(const std::vector<rclcpp::Parameter> & p, const std::string & name, T & value)
+template <typename T>
+bool update_param(const std::vector<rclcpp::Parameter>& p, const std::string& name, T& value)
 {
-  auto it = std::find_if(
-    p.cbegin(), p.cend(), [&name](const rclcpp::Parameter & parameter) {
-      return parameter.get_name() == name;
-    });
+  auto it = std::find_if(p.cbegin(), p.cend(), [&name](const rclcpp::Parameter& parameter) {
+    return parameter.get_name() == name;
+  });
   if (it != p.cend()) {
     value = it->template get_value<T>();
     return true;
@@ -55,7 +53,7 @@ bool update_param(const std::vector<rclcpp::Parameter> & p, const std::string & 
 }  // namespace
 namespace octomap_server
 {
-OctomapServer::OctomapServer(const rclcpp::NodeOptions & node_options)
+OctomapServer::OctomapServer(const rclcpp::NodeOptions& node_options)
 : Node("octomap_server", node_options)
 {
   using std::placeholders::_1;
@@ -126,8 +124,7 @@ OctomapServer::OctomapServer(const rclcpp::NodeOptions & node_options)
   {
     // distance of points from plane for RANSAC
     rcl_interfaces::msg::ParameterDescriptor ground_filter_distance_desc;
-    ground_filter_distance_desc.description =
-      "Distance threshold to consider a point as ground";
+    ground_filter_distance_desc.description = "Distance threshold to consider a point as ground";
     rcl_interfaces::msg::FloatingPointRange ground_filter_distance_range;
     ground_filter_distance_range.from_value = 0.001;
     ground_filter_distance_range.to_value = 1.0;
@@ -155,8 +152,7 @@ OctomapServer::OctomapServer(const rclcpp::NodeOptions & node_options)
     ground_filter_plane_distance_range.from_value = 0.001;
     ground_filter_plane_distance_range.to_value = 1.0;
     ground_filter_plane_distance_desc.floating_point_range.push_back(
-      ground_filter_plane_distance_range
-    );
+      ground_filter_plane_distance_range);
     ground_filter_plane_distance_ =
       declare_parameter("ground_filter.plane_distance", 0.07, ground_filter_plane_distance_desc);
   }
@@ -191,8 +187,7 @@ OctomapServer::OctomapServer(const rclcpp::NodeOptions & node_options)
   const double prob_miss = declare_parameter("sensor_model.miss", 0.4, prob_miss_desc);
 
   rcl_interfaces::msg::ParameterDescriptor prob_min_desc;
-  prob_min_desc.description =
-    "Minimum probability for clamping when dynamically building a map";
+  prob_min_desc.description = "Minimum probability for clamping when dynamically building a map";
   rcl_interfaces::msg::FloatingPointRange prob_min_range;
   prob_min_range.from_value = 0.0;
   prob_min_range.to_value = 1.0;
@@ -200,8 +195,7 @@ OctomapServer::OctomapServer(const rclcpp::NodeOptions & node_options)
   const double thres_min = declare_parameter("sensor_model.min", 0.12, prob_min_desc);
 
   rcl_interfaces::msg::ParameterDescriptor prob_max_desc;
-  prob_max_desc.description =
-    "Maximum probability for clamping when dynamically building a map";
+  prob_max_desc.description = "Maximum probability for clamping when dynamically building a map";
   rcl_interfaces::msg::FloatingPointRange prob_max_range;
   prob_max_range.from_value = 0.0;
   prob_max_range.to_value = 1.0;
@@ -223,9 +217,10 @@ OctomapServer::OctomapServer(const rclcpp::NodeOptions & node_options)
   if (filter_ground_plane_ && (point_cloud_min_z_ > 0.0 || point_cloud_max_z_ < 0.0)) {
     RCLCPP_WARN_STREAM(
       get_logger(),
-      "You enabled ground filtering but incoming pointclouds will be pre-filtered in [" <<
-        point_cloud_min_z_ << ", " << point_cloud_max_z_ << "], excluding the ground level z=0. "
-        "This will not work.");
+      "You enabled ground filtering but incoming pointclouds will be pre-filtered in ["
+        << point_cloud_min_z_ << ", " << point_cloud_max_z_
+        << "], excluding the ground level z=0. "
+           "This will not work.");
   }
 
   if (use_height_map_ && use_colored_map_) {
@@ -302,11 +297,9 @@ OctomapServer::OctomapServer(const rclcpp::NodeOptions & node_options)
 
   tf2_buffer_ = std::make_shared<tf2_ros::Buffer>(get_clock());
   auto timer_interface = std::make_shared<tf2_ros::CreateTimerROS>(
-    this->get_node_base_interface(),
-    this->get_node_timers_interface());
+    this->get_node_base_interface(), this->get_node_timers_interface());
   tf2_buffer_->setCreateTimerInterface(timer_interface);
-  tf2_listener_ =
-    std::make_shared<tf2_ros::TransformListener>(*tf2_buffer_);
+  tf2_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf2_buffer_);
 
   using std::chrono_literals::operator""s;
   point_cloud_sub_.subscribe(this, "cloud_in", rmw_qos_profile_sensor_data);
@@ -320,10 +313,10 @@ OctomapServer::OctomapServer(const rclcpp::NodeOptions & node_options)
     "octomap_binary", std::bind(&OctomapServer::onOctomapBinarySrv, this, _1, _2));
   octomap_full_srv_ = create_service<OctomapSrv>(
     "octomap_full", std::bind(&OctomapServer::onOctomapFullSrv, this, _1, _2));
-  clear_bbox_srv_ = create_service<BBoxSrv>(
-    "~/clear_bbox", std::bind(&OctomapServer::clearBBoxSrv, this, _1, _2));
-  reset_srv_ = create_service<ResetSrv>(
-    "~/reset", std::bind(&OctomapServer::resetSrv, this, _1, _2));
+  clear_bbox_srv_ =
+    create_service<BBoxSrv>("~/clear_bbox", std::bind(&OctomapServer::clearBBoxSrv, this, _1, _2));
+  reset_srv_ =
+    create_service<ResetSrv>("~/reset", std::bind(&OctomapServer::resetSrv, this, _1, _2));
 
   // set parameter callback
   set_param_res_ =
@@ -335,7 +328,7 @@ OctomapServer::OctomapServer(const rclcpp::NodeOptions & node_options)
   }
 }
 
-bool OctomapServer::openFile(const std::string & filename)
+bool OctomapServer::openFile(const std::string& filename)
 {
   if (filename.length() <= 3) {
     return false;
@@ -351,7 +344,7 @@ bool OctomapServer::openFile(const std::string & filename)
     if (!tree) {
       return false;
     }
-    octree_ = std::unique_ptr<OcTreeT>(dynamic_cast<OcTreeT *>(tree.release()));
+    octree_ = std::unique_ptr<OcTreeT>(dynamic_cast<OcTreeT*>(tree.release()));
     if (!octree_) {
       RCLCPP_ERROR(
         get_logger(),
@@ -364,8 +357,7 @@ bool OctomapServer::openFile(const std::string & filename)
   }
 
   RCLCPP_INFO(
-    get_logger(), "Octomap file %s loaded (%zu nodes).", filename.c_str(),
-    octree_->size());
+    get_logger(), "Octomap file %s loaded (%zu nodes).", filename.c_str(), octree_->size());
 
   tree_depth_ = octree_->getTreeDepth();
   max_tree_depth_ = tree_depth_;
@@ -408,7 +400,7 @@ void OctomapServer::insertCloudCallback(const PointCloud2::ConstSharedPtr cloud)
     sensor_to_world_transform_stamped = tf2_buffer_->lookupTransform(
       world_frame_id_, cloud->header.frame_id, cloud->header.stamp,
       rclcpp::Duration::from_seconds(1.0));
-  } catch (const tf2::TransformException & ex) {
+  } catch (const tf2::TransformException& ex) {
     RCLCPP_WARN(this->get_logger(), "%s", ex.what());
     return;
   }
@@ -427,11 +419,10 @@ void OctomapServer::insertCloudCallback(const PointCloud2::ConstSharedPtr cloud)
   pass_z.setFilterFieldName("z");
   pass_z.setFilterLimits(point_cloud_min_z_, point_cloud_max_z_);
 
-  PCLPointCloud pc_ground;  // segmented ground plane
+  PCLPointCloud pc_ground;     // segmented ground plane
   PCLPointCloud pc_nonground;  // everything else
 
   if (filter_ground_plane_) {
-
     // geometry_msgs::msg::TransformStamped sensor_to_base_transform_stamped;
     // geometry_msgs::msg::TransformStamped base_to_world_transform_stamped;
     // try {
@@ -451,7 +442,6 @@ void OctomapServer::insertCloudCallback(const PointCloud2::ConstSharedPtr cloud)
     //       "You need to set the base_frame_id or disable filter_ground.");
     // }
 
-
     // Eigen::Matrix4f sensor_to_base =
     //   tf2::transformToEigen(sensor_to_base_transform_stamped.transform).matrix().cast<float>();
     // Eigen::Matrix4f base_to_world =
@@ -461,7 +451,6 @@ void OctomapServer::insertCloudCallback(const PointCloud2::ConstSharedPtr cloud)
 
     // taeyoung fixed
     // pcl::transformPointCloud(pc, pc, sensor_to_base);
-
 
     pass_x.setInputCloud(pc.makeShared());
     pass_x.filter(pc);
@@ -492,7 +481,7 @@ void OctomapServer::insertCloudCallback(const PointCloud2::ConstSharedPtr cloud)
     pc_nonground.header = pc.header;
   }
 
-  const auto & t = sensor_to_world_transform_stamped.transform.translation;
+  const auto& t = sensor_to_world_transform_stamped.transform.translation;
   tf2::Vector3 sensor_to_world_vec3{t.x, t.y, t.z};
   insertScan(sensor_to_world_vec3, pc_ground, pc_nonground);
 
@@ -506,14 +495,13 @@ void OctomapServer::insertCloudCallback(const PointCloud2::ConstSharedPtr cloud)
 }
 
 void OctomapServer::insertScan(
-  const tf2::Vector3 & sensor_origin_tf, const PCLPointCloud & ground,
-  const PCLPointCloud & nonground)
+  const tf2::Vector3& sensor_origin_tf, const PCLPointCloud& ground, const PCLPointCloud& nonground)
 {
   const auto sensor_origin = octomap::pointTfToOctomap(sensor_origin_tf);
 
-  if (!octree_->coordToKeyChecked(sensor_origin, update_bbox_min_) ||
-    !octree_->coordToKeyChecked(sensor_origin, update_bbox_max_))
-  {
+  if (
+    !octree_->coordToKeyChecked(sensor_origin, update_bbox_min_) ||
+    !octree_->coordToKeyChecked(sensor_origin, update_bbox_max_)) {
     RCLCPP_ERROR_STREAM(get_logger(), "Could not generate Key for origin " << sensor_origin);
   }
 
@@ -523,7 +511,7 @@ void OctomapServer::insertScan(
   for (PCLPointCloud::const_iterator it = ground.begin(); it != ground.end(); ++it) {
     octomap::point3d point(it->x, it->y, it->z);
     // maxrange check
-    if ((max_range_ > 0.0) && ((point - sensor_origin).norm() > max_range_) ) {
+    if ((max_range_ > 0.0) && ((point - sensor_origin).norm() > max_range_)) {
       point = sensor_origin + (point - sensor_origin).normalized() * max_range_;
     }
 
@@ -545,7 +533,7 @@ void OctomapServer::insertScan(
   for (PCLPointCloud::const_iterator it = nonground.begin(); it != nonground.end(); ++it) {
     octomap::point3d point(it->x, it->y, it->z);
     // maxrange check
-    if ((max_range_ < 0.0) || ((point - sensor_origin).norm() <= max_range_) ) {
+    if ((max_range_ < 0.0) || ((point - sensor_origin).norm() <= max_range_)) {
       // free cells
       if (octree_->computeRayKeys(sensor_origin, point, key_ray_)) {
         free_cells.insert(key_ray_.begin(), key_ray_.end());
@@ -559,7 +547,7 @@ void OctomapServer::insertScan(
         updateMaxKey(key, update_bbox_max_);
 
 #ifdef COLOR_OCTOMAP_SERVER  // NB: Only read and interpret color if it's an occupied node
-        octree_->averageNodeColor(it->x, it->y, it->z, /*r=*/ it->r, /*g=*/ it->g, /*b=*/ it->b);
+        octree_->averageNodeColor(it->x, it->y, it->z, /*r=*/it->r, /*g=*/it->g, /*b=*/it->b);
 #endif
       }
     } else {  // ray longer than maxrange
@@ -597,9 +585,9 @@ void OctomapServer::insertScan(
   octomap::point3d min_pt, max_pt;
   RCLCPP_DEBUG_STREAM(
     get_logger(),
-    "Bounding box keys (before): " << update_bbox_min_[0] << " " << update_bbox_min_[1] << " " <<
-      update_bbox_min_[2] << " / " << update_bbox_max_[0] << " " << update_bbox_max_[1] << " " <<
-      update_bbox_max_[2]);
+    "Bounding box keys (before): " << update_bbox_min_[0] << " " << update_bbox_min_[1] << " "
+                                   << update_bbox_min_[2] << " / " << update_bbox_max_[0] << " "
+                                   << update_bbox_max_[1] << " " << update_bbox_max_[2]);
 
   // TODO(someone): snap max / min keys to larger voxels by max_tree_depth_
   // if (max_tree_depth_ < 16)
@@ -622,18 +610,17 @@ void OctomapServer::insertScan(
   max_pt = octree_->keyToCoord(update_bbox_max_);
   RCLCPP_DEBUG_STREAM(get_logger(), "Updated area bounding box: " << min_pt << " - " << max_pt);
   RCLCPP_DEBUG_STREAM(
-    get_logger(),
-    "Bounding box keys (after): " << update_bbox_min_[0] << " " << update_bbox_min_[1] << " " <<
-      update_bbox_min_[2] << " / " << update_bbox_max_[0] << " " << update_bbox_max_[1] << " " <<
-      update_bbox_max_[2]);
+    get_logger(), "Bounding box keys (after): " << update_bbox_min_[0] << " " << update_bbox_min_[1]
+                                                << " " << update_bbox_min_[2] << " / "
+                                                << update_bbox_max_[0] << " " << update_bbox_max_[1]
+                                                << " " << update_bbox_max_[2]);
 
   if (compress_map_) {
     octree_->prune();
   }
 }
 
-
-void OctomapServer::publishAll(const rclcpp::Time & rostime)
+void OctomapServer::publishAll(const rclcpp::Time& rostime)
 {
   const auto start_time = rclcpp::Clock{}.now();
   const size_t octomap_size = octree_->size();
@@ -643,30 +630,30 @@ void OctomapServer::publishAll(const rclcpp::Time & rostime)
     return;
   }
 
-  bool publish_free_marker_array_ = publish_free_space_ &&
+  bool publish_free_marker_array_ =
+    publish_free_space_ &&
     (latched_topics_ ||
-    fmarker_pub_->get_subscription_count() +
-    fmarker_pub_->get_intra_process_subscription_count() > 0);
+     fmarker_pub_->get_subscription_count() + fmarker_pub_->get_intra_process_subscription_count() >
+       0);
   bool publish_marker_array =
     (latched_topics_ ||
-    marker_pub_->get_subscription_count() +
-    marker_pub_->get_intra_process_subscription_count() > 0);
+     marker_pub_->get_subscription_count() + marker_pub_->get_intra_process_subscription_count() >
+       0);
   bool publish_point_cloud =
-    (latched_topics_ ||
-    point_cloud_pub_->get_subscription_count() +
-    point_cloud_pub_->get_intra_process_subscription_count() > 0);
+    (latched_topics_ || point_cloud_pub_->get_subscription_count() +
+                            point_cloud_pub_->get_intra_process_subscription_count() >
+                          0);
   bool publish_binary_map =
-    (latched_topics_ ||
-    binary_map_pub_->get_subscription_count() +
-    binary_map_pub_->get_intra_process_subscription_count() > 0);
+    (latched_topics_ || binary_map_pub_->get_subscription_count() +
+                            binary_map_pub_->get_intra_process_subscription_count() >
+                          0);
   bool publish_full_map =
-    (latched_topics_ ||
-    full_map_pub_->get_subscription_count() +
-    full_map_pub_->get_intra_process_subscription_count() > 0);
+    (latched_topics_ || full_map_pub_->get_subscription_count() +
+                            full_map_pub_->get_intra_process_subscription_count() >
+                          0);
   publish_2d_map_ =
     (latched_topics_ ||
-    map_pub_->get_subscription_count() +
-    map_pub_->get_intra_process_subscription_count() > 0);
+     map_pub_->get_subscription_count() + map_pub_->get_intra_process_subscription_count() > 0);
 
   // init markers for free space:
   MarkerArray free_nodes_vis;
@@ -687,9 +674,8 @@ void OctomapServer::publishAll(const rclcpp::Time & rostime)
   handlePreNodeTraversal(rostime);
 
   // now, traverse all leafs in the tree:
-  for (OcTreeT::iterator it = octree_->begin(max_tree_depth_),
-    end = octree_->end(); it != end; ++it)
-  {
+  for (OcTreeT::iterator it = octree_->begin(max_tree_depth_), end = octree_->end(); it != end;
+       ++it) {
     bool in_update_bbox = isInUpdateBBX(it);
 
     // call general hook:
@@ -721,7 +707,6 @@ void OctomapServer::publishAll(const rclcpp::Time & rostime)
           handleOccupiedNodeInBBX(it);
         }
 
-
         // create marker:
         if (publish_marker_array) {
           unsigned idx = it.getDepth();
@@ -744,10 +729,8 @@ void OctomapServer::publishAll(const rclcpp::Time & rostime)
             octree_->getMetricMax(max_x, max_y, max_z);
 
             double h =
-              (1.0 -
-              std::min(
-                std::max((cube_center.z - min_z) / (max_z - min_z), 0.0),
-                1.0)) * color_factor_;
+              (1.0 - std::min(std::max((cube_center.z - min_z) / (max_z - min_z), 0.0), 1.0)) *
+              color_factor_;
             occupied_nodes_vis.markers[idx].colors.push_back(heightMapColor(h));
           }
 
@@ -830,7 +813,6 @@ void OctomapServer::publishAll(const rclcpp::Time & rostime)
         occupied_nodes_vis.markers[i].color = color_;
       }
 
-
       if (occupied_nodes_vis.markers[i].points.size() > 0) {
         occupied_nodes_vis.markers[i].action = visualization_msgs::msg::Marker::ADD;
       } else {
@@ -840,7 +822,6 @@ void OctomapServer::publishAll(const rclcpp::Time & rostime)
 
     marker_pub_->publish(occupied_nodes_vis);
   }
-
 
   // finish FreeMarkerArray:
   if (publish_free_marker_array_) {
@@ -856,7 +837,6 @@ void OctomapServer::publishAll(const rclcpp::Time & rostime)
       free_nodes_vis.markers[i].scale.y = size;
       free_nodes_vis.markers[i].scale.z = size;
       free_nodes_vis.markers[i].color = color_free_;
-
 
       if (free_nodes_vis.markers[i].points.size() > 0) {
         free_nodes_vis.markers[i].action = visualization_msgs::msg::Marker::ADD;
@@ -912,7 +892,6 @@ bool OctomapServer::onOctomapFullSrv(
   res->map.header.frame_id = world_frame_id_;
   res->map.header.stamp = now();
 
-
   if (!octomap_msgs::fullMapToMsg(*octree_, res->map)) {
     return false;
   }
@@ -928,9 +907,8 @@ bool OctomapServer::clearBBoxSrv(
   const auto max = octomap::pointMsgToOctomap(req->max);
 
   const double thres_min = octree_->getClampingThresMin();
-  for (auto it = octree_->begin_leafs_bbx(min, max),
-    end = octree_->end_leafs_bbx(); it != end; ++it)
-  {
+  for (auto it = octree_->begin_leafs_bbx(min, max), end = octree_->end_leafs_bbx(); it != end;
+       ++it) {
     it->setLogOdds(octomap::logodds(thres_min));
     // octree_->updateNode(it.getKey(), -6.0f);
   }
@@ -988,7 +966,7 @@ bool OctomapServer::resetSrv(
   return true;
 }
 
-void OctomapServer::publishBinaryOctoMap(const rclcpp::Time & rostime) const
+void OctomapServer::publishBinaryOctoMap(const rclcpp::Time& rostime) const
 {
   Octomap map;
   map.header.frame_id = world_frame_id_;
@@ -1000,7 +978,7 @@ void OctomapServer::publishBinaryOctoMap(const rclcpp::Time & rostime) const
   }
 }
 
-void OctomapServer::publishFullOctoMap(const rclcpp::Time & rostime) const
+void OctomapServer::publishFullOctoMap(const rclcpp::Time& rostime) const
 {
   Octomap map;
   map.header.frame_id = world_frame_id_;
@@ -1013,8 +991,7 @@ void OctomapServer::publishFullOctoMap(const rclcpp::Time & rostime) const
 }
 
 void OctomapServer::filterGroundPlane(
-  const PCLPointCloud & pc, PCLPointCloud & ground,
-  PCLPointCloud & nonground) const
+  const PCLPointCloud& pc, PCLPointCloud& ground, PCLPointCloud& nonground) const
 {
   ground.header = pc.header;
   nonground.header = pc.header;
@@ -1040,7 +1017,6 @@ void OctomapServer::filterGroundPlane(
     seg.setAxis(Eigen::Vector3f(0, 0, 1));
     seg.setEpsAngle(ground_filter_angle_);
 
-
     PCLPointCloud cloud_filtered(pc);
     // Create the filtering object
     pcl::ExtractIndices<PCLPoint> extract;
@@ -1060,11 +1036,9 @@ void OctomapServer::filterGroundPlane(
 
       if (std::abs(coefficients->values.at(3)) < ground_filter_plane_distance_) {
         RCLCPP_DEBUG(
-          get_logger(),
-          "Ground plane found: %zu/%zu inliers. Coeff: %f %f %f %f",
-          inliers->indices.size(), cloud_filtered.size(),
-          coefficients->values.at(0), coefficients->values.at(1), coefficients->values.at(
-            2), coefficients->values.at(3));
+          get_logger(), "Ground plane found: %zu/%zu inliers. Coeff: %f %f %f %f",
+          inliers->indices.size(), cloud_filtered.size(), coefficients->values.at(0),
+          coefficients->values.at(1), coefficients->values.at(2), coefficients->values.at(3));
         extract.setNegative(false);
         extract.filter(ground);
 
@@ -1081,11 +1055,9 @@ void OctomapServer::filterGroundPlane(
         ground_plane_found = true;
       } else {
         RCLCPP_DEBUG(
-          get_logger(),
-          "Horizontal plane (not ground) found: %zu/%zu inliers. Coeff: %f %f %f %f",
-          inliers->indices.size(), cloud_filtered.size(),
-          coefficients->values.at(0), coefficients->values.at(1), coefficients->values.at(
-            2), coefficients->values.at(3));
+          get_logger(), "Horizontal plane (not ground) found: %zu/%zu inliers. Coeff: %f %f %f %f",
+          inliers->indices.size(), cloud_filtered.size(), coefficients->values.at(0),
+          coefficients->values.at(1), coefficients->values.at(2), coefficients->values.at(3));
         pcl::PointCloud<PCLPoint> cloud_out;
         extract.setNegative(false);
         extract.filter(cloud_out);
@@ -1127,7 +1099,7 @@ void OctomapServer::filterGroundPlane(
   }
 }
 
-void OctomapServer::handlePreNodeTraversal(const rclcpp::Time & rostime)
+void OctomapServer::handlePreNodeTraversal(const rclcpp::Time& rostime)
 {
   if (publish_2d_map_) {
     // init projected 2D map:
@@ -1152,9 +1124,8 @@ void OctomapServer::handlePreNodeTraversal(const rclcpp::Time & rostime)
     octomap::OcTreeKey max_key = octree_->coordToKey(max_pt, max_tree_depth_);
 
     RCLCPP_DEBUG(
-      get_logger(),
-      "min_key: %d %d %d / max_key: %d %d %d", min_key[0], min_key[1], min_key[2], max_key[0],
-      max_key[1], max_key[2]);
+      get_logger(), "min_key: %d %d %d / max_key: %d %d %d", min_key[0], min_key[1], min_key[2],
+      max_key[0], max_key[1], max_key[2]);
 
     // add padding if requested (= new min/max_pts in x&y):
     double half_padded_x = 0.5 * min_x_size_;
@@ -1169,22 +1140,19 @@ void OctomapServer::handlePreNodeTraversal(const rclcpp::Time & rostime)
     octomap::OcTreeKey padded_max_key;
     if (!octree_->coordToKeyChecked(min_pt, max_tree_depth_, padded_min_key_)) {
       RCLCPP_ERROR(
-        get_logger(),
-        "Could not create padded min OcTree key at %f %f %f", min_pt.x(), min_pt.y(),
+        get_logger(), "Could not create padded min OcTree key at %f %f %f", min_pt.x(), min_pt.y(),
         min_pt.z());
       return;
     }
     if (!octree_->coordToKeyChecked(max_pt, max_tree_depth_, padded_max_key)) {
       RCLCPP_ERROR(
-        get_logger(),
-        "Could not create padded max OcTree key at %f %f %f", max_pt.x(), max_pt.y(),
+        get_logger(), "Could not create padded max OcTree key at %f %f %f", max_pt.x(), max_pt.y(),
         max_pt.z());
       return;
     }
 
     RCLCPP_DEBUG(
-      get_logger(),
-      "Padded MinKey: %d %d %d / padded MaxKey: %d %d %d", padded_min_key_[0],
+      get_logger(), "Padded MinKey: %d %d %d / padded MaxKey: %d %d %d", padded_min_key_[0],
       padded_min_key_[1], padded_min_key_[2], padded_max_key[0], padded_max_key[1],
       padded_max_key[2]);
     assert(padded_max_key[0] >= max_key[0] && padded_max_key[1] >= max_key[1]);
@@ -1230,26 +1198,20 @@ void OctomapServer::handlePreNodeTraversal(const rclcpp::Time & rostime)
         adjustMapData(gridmap_, old_map_info);
       }
       OccupancyGrid::_data_type::iterator startIt;
-      size_t mapUpdateBBXmin_x =
-        std::max(
-        0,
-        (static_cast<int>(update_bbox_min_[0]) - static_cast<int>(padded_min_key_[0])) /
-        static_cast<int>(multires_2d_scale_));
-      size_t mapUpdateBBXmin_y =
-        std::max(
-        0,
-        (static_cast<int>(update_bbox_min_[1]) - static_cast<int>(padded_min_key_[1])) /
-        static_cast<int>(multires_2d_scale_));
-      size_t mapUpdateBBXmax_x =
-        std::min(
+      size_t mapUpdateBBXmin_x = std::max(
+        0, (static_cast<int>(update_bbox_min_[0]) - static_cast<int>(padded_min_key_[0])) /
+             static_cast<int>(multires_2d_scale_));
+      size_t mapUpdateBBXmin_y = std::max(
+        0, (static_cast<int>(update_bbox_min_[1]) - static_cast<int>(padded_min_key_[1])) /
+             static_cast<int>(multires_2d_scale_));
+      size_t mapUpdateBBXmax_x = std::min(
         static_cast<int>(gridmap_.info.width - 1),
         (static_cast<int>(update_bbox_max_[0]) - static_cast<int>(padded_min_key_[0])) /
-        static_cast<int>(multires_2d_scale_));
-      size_t mapUpdateBBXmax_y =
-        std::min(
+          static_cast<int>(multires_2d_scale_));
+      size_t mapUpdateBBXmax_y = std::min(
         static_cast<int>(gridmap_.info.height - 1),
         (static_cast<int>(update_bbox_max_[1]) - static_cast<int>(padded_min_key_[1])) /
-        static_cast<int>(multires_2d_scale_));
+          static_cast<int>(multires_2d_scale_));
 
       assert(mapUpdateBBXmax_x > mapUpdateBBXmin_x);
       assert(mapUpdateBBXmax_y > mapUpdateBBXmin_y);
@@ -1262,57 +1224,56 @@ void OctomapServer::handlePreNodeTraversal(const rclcpp::Time & rostime)
         RCLCPP_ERROR(
           get_logger(),
           "BBX index not valid: %d (max index %zu for size %d x %d) "
-          "update-BBX is: [%zu %zu]-[%zu %zu]", max_idx,
-          gridmap_.data.size(), gridmap_.info.width, gridmap_.info.height,
+          "update-BBX is: [%zu %zu]-[%zu %zu]",
+          max_idx, gridmap_.data.size(), gridmap_.info.width, gridmap_.info.height,
           mapUpdateBBXmin_x, mapUpdateBBXmin_y, mapUpdateBBXmax_x, mapUpdateBBXmax_y);
       }
 
       // reset proj. 2D map in bounding box:
       for (unsigned int j = mapUpdateBBXmin_y; j <= mapUpdateBBXmax_y; ++j) {
         std::fill_n(
-          gridmap_.data.begin() + gridmap_.info.width * j + mapUpdateBBXmin_x,
-          numCols, -1);
+          gridmap_.data.begin() + gridmap_.info.width * j + mapUpdateBBXmin_x, numCols, -1);
       }
     }
   }
 }
 
-void OctomapServer::handlePostNodeTraversal([[maybe_unused]] const rclcpp::Time & rostime)
+void OctomapServer::handlePostNodeTraversal([[maybe_unused]] const rclcpp::Time& rostime)
 {
   if (publish_2d_map_) {
     map_pub_->publish(gridmap_);
   }
 }
 
-void OctomapServer::handleOccupiedNode(const OcTreeT::iterator & it)
+void OctomapServer::handleOccupiedNode(const OcTreeT::iterator& it)
 {
   if (publish_2d_map_ && project_complete_map_) {
     update2DMap(it, true);
   }
 }
 
-void OctomapServer::handleFreeNode(const OcTreeT::iterator & it)
+void OctomapServer::handleFreeNode(const OcTreeT::iterator& it)
 {
   if (publish_2d_map_ && project_complete_map_) {
     update2DMap(it, false);
   }
 }
 
-void OctomapServer::handleOccupiedNodeInBBX(const OcTreeT::iterator & it)
+void OctomapServer::handleOccupiedNodeInBBX(const OcTreeT::iterator& it)
 {
   if (publish_2d_map_ && project_complete_map_) {
     update2DMap(it, true);
   }
 }
 
-void OctomapServer::handleFreeNodeInBBX(const OcTreeT::iterator & it)
+void OctomapServer::handleFreeNodeInBBX(const OcTreeT::iterator& it)
 {
   if (publish_2d_map_ && project_complete_map_) {
     update2DMap(it, false);
   }
 }
 
-void OctomapServer::update2DMap(const OcTreeT::iterator & it, bool occupied)
+void OctomapServer::update2DMap(const OcTreeT::iterator& it, bool occupied)
 {
   // update 2D map (occupied always overrides):
   if (it.getDepth() == max_tree_depth_) {
@@ -1340,8 +1301,7 @@ void OctomapServer::update2DMap(const OcTreeT::iterator & it, bool occupied)
   }
 }
 
-
-bool OctomapServer::isSpeckleNode(const octomap::OcTreeKey & n_key) const
+bool OctomapServer::isSpeckleNode(const octomap::OcTreeKey& n_key) const
 {
   octomap::OcTreeKey key;
   bool neighbor_found = false;
@@ -1349,7 +1309,7 @@ bool OctomapServer::isSpeckleNode(const octomap::OcTreeKey & n_key) const
     for (key[1] = n_key[1] - 1; !neighbor_found && key[1] <= n_key[1] + 1; ++key[1]) {
       for (key[0] = n_key[0] - 1; !neighbor_found && key[0] <= n_key[0] + 1; ++key[0]) {
         if (key != n_key) {
-          octomap::OcTreeNode * node = octree_->search(key);
+          octomap::OcTreeNode* node = octree_->search(key);
           if (node && octree_->isNodeOccupied(node)) {
             // we have a neighbor=> break!
             neighbor_found = true;
@@ -1363,7 +1323,7 @@ bool OctomapServer::isSpeckleNode(const octomap::OcTreeKey & n_key) const
 }
 
 rcl_interfaces::msg::SetParametersResult OctomapServer::onParameter(
-  const std::vector<rclcpp::Parameter> & parameters)
+  const std::vector<rclcpp::Parameter>& parameters)
 {
   int64_t max_tree_depth{get_parameter("max_depth").as_int()};
   update_param(parameters, "max_depth", max_tree_depth);
@@ -1400,24 +1360,21 @@ rcl_interfaces::msg::SetParametersResult OctomapServer::onParameter(
   return result;
 }
 
-void OctomapServer::adjustMapData(OccupancyGrid & map, const MapMetaData & old_map_info) const
+void OctomapServer::adjustMapData(OccupancyGrid& map, const MapMetaData& old_map_info) const
 {
   if (map.info.resolution != old_map_info.resolution) {
     RCLCPP_ERROR(get_logger(), "Resolution of map changed, cannot be adjusted");
     return;
   }
 
-  int i_off =
-    static_cast<int>((old_map_info.origin.position.x - map.info.origin.position.x) /
-    map.info.resolution + 0.5);
-  int j_off =
-    static_cast<int>((old_map_info.origin.position.y - map.info.origin.position.y) /
-    map.info.resolution + 0.5);
+  int i_off = static_cast<int>(
+    (old_map_info.origin.position.x - map.info.origin.position.x) / map.info.resolution + 0.5);
+  int j_off = static_cast<int>(
+    (old_map_info.origin.position.y - map.info.origin.position.y) / map.info.resolution + 0.5);
 
-  if (i_off < 0 || j_off < 0 ||
-    old_map_info.width + i_off > map.info.width ||
-    old_map_info.height + j_off > map.info.height)
-  {
+  if (
+    i_off < 0 || j_off < 0 || old_map_info.width + i_off > map.info.width ||
+    old_map_info.height + j_off > map.info.height) {
     RCLCPP_ERROR(
       get_logger(), "New 2D map does not contain old map area, this case is not implemented");
     return;
@@ -1438,12 +1395,11 @@ void OctomapServer::adjustMapData(OccupancyGrid & map, const MapMetaData & old_m
     to_start = map.data.begin() + ((j + j_off) * gridmap_.info.width + i_off);
     copy(from_start, from_end, to_start);
 
-//    for (int i =0; i < int(old_map_info.width); ++i){
-//      map.data[gridmap_.info.width*(j+j_off) +i+i_off] = oldMapData[old_map_info.width*j +i];
-//    }
+    //    for (int i =0; i < int(old_map_info.width); ++i){
+    //      map.data[gridmap_.info.width*(j+j_off) +i+i_off] = oldMapData[old_map_info.width*j +i];
+    //    }
   }
 }
-
 
 ColorRGBA OctomapServer::heightMapColor(double h)
 {
@@ -1472,25 +1428,39 @@ ColorRGBA OctomapServer::heightMapColor(double h)
   switch (i) {
     case 6:
     case 0:
-      color.r = v; color.g = n; color.b = m;
+      color.r = v;
+      color.g = n;
+      color.b = m;
       break;
     case 1:
-      color.r = n; color.g = v; color.b = m;
+      color.r = n;
+      color.g = v;
+      color.b = m;
       break;
     case 2:
-      color.r = m; color.g = v; color.b = n;
+      color.r = m;
+      color.g = v;
+      color.b = n;
       break;
     case 3:
-      color.r = m; color.g = n; color.b = v;
+      color.r = m;
+      color.g = n;
+      color.b = v;
       break;
     case 4:
-      color.r = n; color.g = m; color.b = v;
+      color.r = n;
+      color.g = m;
+      color.b = v;
       break;
     case 5:
-      color.r = v; color.g = m; color.b = n;
+      color.r = v;
+      color.g = m;
+      color.b = n;
       break;
     default:
-      color.r = 1; color.g = 0.5; color.b = 0.5;
+      color.r = 1;
+      color.g = 0.5;
+      color.b = 0.5;
       break;
   }
 

@@ -26,30 +26,29 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#include <octomap/octomap.h>
-
 #include <chrono>
 #include <memory>
 #include <string>
 
-#include "rclcpp/rclcpp.hpp"
+#include <octomap/octomap.h>
+
 #include "octomap_msgs/conversions.h"
 #include "octomap_msgs/srv/get_octomap.hpp"
+#include "rclcpp/rclcpp.hpp"
 
 namespace octomap_server
 {
-using octomap::AbstractOcTree;
 using octomap::AbstractOccupancyOcTree;
+using octomap::AbstractOcTree;
 using octomap_msgs::srv::GetOctomap;
 
 class OctomapSaver : public rclcpp::Node
 {
 public:
-  explicit OctomapSaver(const rclcpp::NodeOptions & node_options);
+  explicit OctomapSaver(const rclcpp::NodeOptions& node_options);
 };
 
-OctomapSaver::OctomapSaver(
-  const rclcpp::NodeOptions & node_options)
+OctomapSaver::OctomapSaver(const rclcpp::NodeOptions& node_options)
 : rclcpp::Node("octomap_saver", node_options)
 {
   using std::chrono_literals::operator""s;
@@ -73,36 +72,29 @@ OctomapSaver::OctomapSaver(
     RCLCPP_INFO(get_logger(), "Waiting for service...");
   }
 
-  auto request =
-    std::make_shared<GetOctomap::Request>();
+  auto request = std::make_shared<GetOctomap::Request>();
   auto response = client->async_send_request(request);
 
-  if (rclcpp::spin_until_future_complete(
-      get_node_base_interface(),
-      response) == rclcpp::FutureReturnCode::SUCCESS)
-  {
+  if (
+    rclcpp::spin_until_future_complete(get_node_base_interface(), response) ==
+    rclcpp::FutureReturnCode::SUCCESS) {
     std::unique_ptr<AbstractOcTree> tree{octomap_msgs::msgToMap(response.get()->map)};
     std::unique_ptr<AbstractOccupancyOcTree> octree;
     if (tree) {
-      octree =
-        std::unique_ptr<AbstractOccupancyOcTree>(
-        dynamic_cast<AbstractOccupancyOcTree *>(tree.
-        release()));
+      octree = std::unique_ptr<AbstractOccupancyOcTree>(
+        dynamic_cast<AbstractOccupancyOcTree*>(tree.release()));
     } else {
       RCLCPP_ERROR(get_logger(), "Error creating octree from received message");
       RCLCPP_WARN_EXPRESSION(
         get_logger(), response.get()->map.id == "ColorOcTree",
         "You requested a binary map for a ColorOcTree - this is currently not supported. "
-        "Please add -f to request a full map"
-      );
+        "Please add -f to request a full map");
     }
 
     if (octree) {
       RCLCPP_INFO(
-        get_logger(),
-        "Map received (%zu nodes, %f m res), saving to %s",
-        octree->size(), octree->getResolution(), map_name.c_str()
-      );
+        get_logger(), "Map received (%zu nodes, %f m res), saving to %s", octree->size(),
+        octree->getResolution(), map_name.c_str());
       std::string suffix = map_name.substr(map_name.length() - 3, 3);
       if (suffix == ".bt") {  // write to binary file:
         if (!octree->writeBinary(map_name)) {
