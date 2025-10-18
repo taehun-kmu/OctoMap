@@ -209,7 +209,9 @@ if(BUILD_TESTING)
   octomap_add_catch2_test(test_octomap_saver
     test/test_octomap_saver.cpp
     octomap_saver
+    octomap_server_static
     ${OCTOMAP_LIBRARIES}
+    ${PCL_LIBRARIES}
   )
 
   # OctomapServer PointCloud processing tests
