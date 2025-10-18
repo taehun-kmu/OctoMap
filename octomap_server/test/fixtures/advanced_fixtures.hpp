@@ -29,13 +29,16 @@
 #ifndef OCTOMAP_SERVER__TEST__FIXTURES__ADVANCED_FIXTURES_HPP_
 #define OCTOMAP_SERVER__TEST__FIXTURES__ADVANCED_FIXTURES_HPP_
 
+#include <chrono>
 #include <fstream>
 #include <memory>
 #include <string>
 #include <vector>
 
 #include <cmath>
+#include <cstdlib>
 #include <filesystem>
+#include <rclcpp/clock.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 
