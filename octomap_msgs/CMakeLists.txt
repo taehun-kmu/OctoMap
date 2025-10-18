@@ -1,12 +1,14 @@
 cmake_minimum_required(VERSION 3.5)
 project(octomap_msgs)
 
-# Default to C++14
+# Default to C++17 (required for std::filesystem in tests)
 if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD 17)
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
+  set(CMAKE_CXX_EXTENSIONS OFF)
 endif()
 
-# Disable Wredundant-decls warnings since rosidl generates redundant function declarations 
+# Disable Wredundant-decls warnings since rosidl generates redundant function declarations
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Wno-redundant-decls")
 endif()
