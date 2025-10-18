@@ -158,57 +158,63 @@ void OctomapServerMultilayer::handlePreNodeTraversal(const rclcpp::Time& rostime
     updateArmLinksFromAttachedObjects();
   }
 
-  // If no arm links, use default arm layer height
-  if (arm_links_.empty()) {
-    RCLCPP_DEBUG(get_logger(), "No arm links available, using default arm layer height");
-    multi_gridmap_.at(2).min_z = get_parameter("arm_layer.min_z").as_double();
-    multi_gridmap_.at(2).max_z = get_parameter("arm_layer.max_z").as_double();
-    multi_gridmap_.at(2).z = (multi_gridmap_.at(2).min_z + multi_gridmap_.at(2).max_z) / 2.0;
-  } else {
-    // recalculate height of arm layer (stub, TODO)
-    geometry_msgs::msg::PointStamped vin;
-    vin.point.x = 0;
-    vin.point.y = 0;
-    vin.point.z = 0;
-    vin.header.stamp = rostime;
-    double link_padding = 0.03;
+  // Protect arm links access (read section)
+  {
+    std::lock_guard<std::mutex> lock(arm_links_mutex_);
 
-    double min_arm_height = 2.0;
-    double max_arm_height = 0.0;
-    bool any_transform_succeeded = false;
-
-    for (size_t i = 0; i < arm_links_.size(); ++i) {
-      vin.header.frame_id = arm_links_[i];
-      geometry_msgs::msg::PointStamped vout;
-      geometry_msgs::msg::TransformStamped transform_stamped;
-      try {
-        transform_stamped = tf2_buffer_->lookupTransform(
-          "base_footprint", arm_links_.at(i), rclcpp::Time(0), rclcpp::Duration::from_seconds(1.0));
-      } catch (const tf2::TransformException& ex) {
-        RCLCPP_WARN_THROTTLE(
-          this->get_logger(), *get_clock(),
-          5000,  // 5 seconds
-          "TF lookup failed for %s: %s", arm_links_[i].c_str(), ex.what());
-        continue;
-      }
-      tf2::doTransform(vin, vout, transform_stamped);
-      max_arm_height =
-        std::max(max_arm_height, vout.point.z + (arm_link_offsets_.at(i) + link_padding));
-      min_arm_height =
-        std::min(min_arm_height, vout.point.z - (arm_link_offsets_.at(i) + link_padding));
-      any_transform_succeeded = true;
-    }
-    if (any_transform_succeeded) {
-      RCLCPP_DEBUG(
-        get_logger(), "Arm layer interval adjusted to (%.3f, %.3f)", min_arm_height,
-        max_arm_height);
-      multi_gridmap_.at(2).min_z = min_arm_height;
-      multi_gridmap_.at(2).max_z = max_arm_height;
-      multi_gridmap_.at(2).z = (max_arm_height + min_arm_height) / 2.0;
+    // If no arm links, use default arm layer height
+    if (arm_links_.empty()) {
+      RCLCPP_DEBUG(get_logger(), "No arm links available, using default arm layer height");
+      multi_gridmap_.at(2).min_z = get_parameter("arm_layer.min_z").as_double();
+      multi_gridmap_.at(2).max_z = get_parameter("arm_layer.max_z").as_double();
+      multi_gridmap_.at(2).z = (multi_gridmap_.at(2).min_z + multi_gridmap_.at(2).max_z) / 2.0;
     } else {
-      RCLCPP_WARN_THROTTLE(
-        get_logger(), *get_clock(), 5000,
-        "All TF lookups failed for arm links, keeping previous arm layer bounds");
+      // recalculate height of arm layer (stub, TODO)
+      geometry_msgs::msg::PointStamped vin;
+      vin.point.x = 0;
+      vin.point.y = 0;
+      vin.point.z = 0;
+      vin.header.stamp = rostime;
+      double link_padding = 0.03;
+
+      double min_arm_height = 2.0;
+      double max_arm_height = 0.0;
+      bool any_transform_succeeded = false;
+
+      for (size_t i = 0; i < arm_links_.size(); ++i) {
+        vin.header.frame_id = arm_links_[i];
+        geometry_msgs::msg::PointStamped vout;
+        geometry_msgs::msg::TransformStamped transform_stamped;
+        try {
+          transform_stamped = tf2_buffer_->lookupTransform(
+            "base_footprint", arm_links_.at(i), rclcpp::Time(0),
+            rclcpp::Duration::from_seconds(1.0));
+        } catch (const tf2::TransformException& ex) {
+          RCLCPP_WARN_THROTTLE(
+            this->get_logger(), *get_clock(),
+            5000,  // 5 seconds
+            "TF lookup failed for %s: %s", arm_links_[i].c_str(), ex.what());
+          continue;
+        }
+        tf2::doTransform(vin, vout, transform_stamped);
+        max_arm_height =
+          std::max(max_arm_height, vout.point.z + (arm_link_offsets_.at(i) + link_padding));
+        min_arm_height =
+          std::min(min_arm_height, vout.point.z - (arm_link_offsets_.at(i) + link_padding));
+        any_transform_succeeded = true;
+      }
+      if (any_transform_succeeded) {
+        RCLCPP_DEBUG(
+          get_logger(), "Arm layer interval adjusted to (%.3f, %.3f)", min_arm_height,
+          max_arm_height);
+        multi_gridmap_.at(2).min_z = min_arm_height;
+        multi_gridmap_.at(2).max_z = max_arm_height;
+        multi_gridmap_.at(2).z = (max_arm_height + min_arm_height) / 2.0;
+      } else {
+        RCLCPP_WARN_THROTTLE(
+          get_logger(), *get_clock(), 5000,
+          "All TF lookups failed for arm links, keeping previous arm layer bounds");
+      }
     }
   }
 
@@ -336,6 +342,8 @@ void OctomapServerMultilayer::update2DMap(const OcTreeT::iterator& it, bool occu
 void OctomapServerMultilayer::attachedObjectCallback(
   const moveit_msgs::msg::AttachedCollisionObject::ConstSharedPtr msg)
 {
+  std::lock_guard<std::mutex> lock(arm_links_mutex_);
+
   if (msg->object.operation == moveit_msgs::msg::CollisionObject::ADD) {
     RCLCPP_INFO(
       get_logger(), "Object '%s' attached to link '%s'", msg->object.id.c_str(),
@@ -386,25 +394,30 @@ void OctomapServerMultilayer::updateArmLinksFromAttachedObjects()
   std::vector<moveit_msgs::msg::AttachedCollisionObject> attached_objects;
   scene->getAttachedCollisionObjectMsgs(attached_objects);
 
-  // Rebuild arm links list
-  arm_links_.clear();
-  arm_link_offsets_.clear();
+  // Rebuild arm links list - protect with mutex
+  {
+    std::lock_guard<std::mutex> lock(arm_links_mutex_);
 
-  for (const auto& obj : attached_objects) {
-    arm_links_.push_back(obj.link_name);
+    arm_links_.clear();
+    arm_link_offsets_.clear();
 
-    // Calculate offset
-    double offset = 0.05;
-    if (!obj.object.primitives.empty()) {
-      const auto& dims = obj.object.primitives[0].dimensions;
-      if (!dims.empty()) {
-        offset = *std::max_element(dims.begin(), dims.end()) / 2.0;
+    for (const auto& obj : attached_objects) {
+      arm_links_.push_back(obj.link_name);
+
+      // Calculate offset
+      double offset = 0.05;
+      if (!obj.object.primitives.empty()) {
+        const auto& dims = obj.object.primitives[0].dimensions;
+        if (!dims.empty()) {
+          offset = *std::max_element(dims.begin(), dims.end()) / 2.0;
+        }
       }
+      arm_link_offsets_.push_back(offset);
     }
-    arm_link_offsets_.push_back(offset);
-  }
 
-  RCLCPP_DEBUG(get_logger(), "Updated arm links from planning scene: %zu links", arm_links_.size());
+    RCLCPP_DEBUG(
+      get_logger(), "Updated arm links from planning scene: %zu links", arm_links_.size());
+  }
 }
 
 }  // namespace octomap_server

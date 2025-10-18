@@ -30,6 +30,7 @@
 #define OCTOMAP_SERVER__OCTOMAP_SERVER_MULTILAYER_HPP_
 
 #include <memory>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -93,6 +94,9 @@ private:
   bool use_moveit_attached_objects_;
   std::string robot_description_;
   std::string planning_scene_topic_;
+
+  // Thread safety for arm links access
+  mutable std::mutex arm_links_mutex_;
 };
 }  // namespace octomap_server
 
