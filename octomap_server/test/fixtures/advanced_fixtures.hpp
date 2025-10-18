@@ -66,15 +66,18 @@ public:
   }
 
   // Delete copy/move
-  TempFileFixture(const TempFileFixture&) = delete;
-  TempFileFixture& operator=(const TempFileFixture&) = delete;
-  TempFileFixture(TempFileFixture&&) = delete;
-  TempFileFixture& operator=(TempFileFixture&&) = delete;
+  TempFileFixture(const TempFileFixture &) = delete;
+  TempFileFixture & operator=(const TempFileFixture &) = delete;
+  TempFileFixture(TempFileFixture &&) = delete;
+  TempFileFixture & operator=(TempFileFixture &&) = delete;
 
   /**
    * @brief Get the temporary directory path
    */
-  std::filesystem::path get_temp_dir() const { return temp_dir_; }
+  std::filesystem::path get_temp_dir() const
+  {
+    return temp_dir_;
+  }
 
   /**
    * @brief Create a temporary file with given content
@@ -82,7 +85,7 @@ public:
    * @param content File content
    * @return Full path to created file
    */
-  std::filesystem::path create_file(const std::string& filename, const std::string& content = "")
+  std::filesystem::path create_file(const std::string & filename, const std::string & content = "")
   {
     auto filepath = temp_dir_ / filename;
     std::ofstream file(filepath);
@@ -98,7 +101,7 @@ public:
    * @param dirname Directory name
    * @return Path to created directory
    */
-  std::filesystem::path create_subdir(const std::string& dirname)
+  std::filesystem::path create_subdir(const std::string & dirname)
   {
     auto dirpath = temp_dir_ / dirname;
     std::filesystem::create_directories(dirpath);
@@ -108,7 +111,7 @@ public:
   /**
    * @brief Check if a file exists in temp directory
    */
-  bool file_exists(const std::string& filename) const
+  bool file_exists(const std::string & filename) const
   {
     return std::filesystem::exists(temp_dir_ / filename);
   }
@@ -116,7 +119,7 @@ public:
   /**
    * @brief Read file content
    */
-  std::string read_file(const std::string& filename) const
+  std::string read_file(const std::string & filename) const
   {
     std::ifstream file(temp_dir_ / filename);
     return std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
@@ -151,7 +154,7 @@ public:
    */
   static sensor_msgs::msg::PointCloud2::SharedPtr createStaircase(
     size_t num_steps = 5, double step_height = 0.2, double step_depth = 0.3,
-    size_t points_per_step = 100, const std::string& frame_id = "base_link")
+    size_t points_per_step = 100, const std::string & frame_id = "base_link")
   {
     size_t total_points = num_steps * points_per_step;
     auto cloud = std::make_shared<sensor_msgs::msg::PointCloud2>();
@@ -194,7 +197,7 @@ public:
    */
   static sensor_msgs::msg::PointCloud2::SharedPtr createSlope(
     double width = 2.0, double length = 3.0, double angle_degrees = 15.0, size_t num_points = 500,
-    const std::string& frame_id = "base_link")
+    const std::string & frame_id = "base_link")
   {
     auto cloud = std::make_shared<sensor_msgs::msg::PointCloud2>();
     cloud->header.frame_id = frame_id;
@@ -238,7 +241,7 @@ public:
    */
   static sensor_msgs::msg::PointCloud2::SharedPtr createObstacles(
     size_t num_obstacles = 5, size_t points_per_obstacle = 200, double min_size = 0.2,
-    double max_size = 0.8, double arena_size = 5.0, const std::string& frame_id = "base_link")
+    double max_size = 0.8, double arena_size = 5.0, const std::string & frame_id = "base_link")
   {
     size_t total_points = num_obstacles * points_per_obstacle;
     auto cloud = std::make_shared<sensor_msgs::msg::PointCloud2>();
@@ -285,7 +288,7 @@ public:
    */
   static sensor_msgs::msg::PointCloud2::SharedPtr createCylinder(
     double radius = 0.5, double height = 2.0, double center_x = 0.0, double center_y = 0.0,
-    size_t num_points = 500, const std::string& frame_id = "base_link")
+    size_t num_points = 500, const std::string & frame_id = "base_link")
   {
     auto cloud = std::make_shared<sensor_msgs::msg::PointCloud2>();
     cloud->header.frame_id = frame_id;

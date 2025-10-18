@@ -1,4 +1,5 @@
-// Copyright 2024, OctoMap-ROS2. All rights reserved.
+// Copyright 2024, OctoMap
+// SPDX-License-Identifier: BSD-3-Clause
 
 #define CATCH_CONFIG_MAIN
 #include <octomap/octomap.h>

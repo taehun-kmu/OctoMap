@@ -136,7 +136,9 @@ if(BUILD_TESTING)
 
   # Complementary C++ static analysis
   find_package(ament_cmake_cppcheck REQUIRED)
-  ament_cppcheck()
+  ament_cppcheck(
+    EXCLUDE ${CMAKE_CURRENT_BINARY_DIR}
+  )
 
   # Python linting (for scripts)
   find_package(ament_cmake_pep257 REQUIRED)
@@ -147,8 +149,12 @@ if(BUILD_TESTING)
   find_package(ament_cmake_lint_cmake REQUIRED)
   find_package(ament_cmake_xmllint REQUIRED)
 
-  ament_copyright()
-  ament_lint_cmake()
+  ament_copyright(
+    EXCLUDE ${CMAKE_CURRENT_BINARY_DIR}
+  )
+  ament_lint_cmake(
+    EXCLUDE ${CMAKE_CURRENT_BINARY_DIR}
+  )
   ament_xmllint()
 
   # Catch2 test framework
