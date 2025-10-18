@@ -97,8 +97,16 @@ TEST_CASE(
   "OctomapServerStatic does not subscribe to point clouds", "[octomap_server_static][topics]")
 {
   ROS2Fixture ros_fixture;
+  TempFileFixture temp_fixture;
+
+  // Create a simple octomap file
+  octomap::OcTree tree(0.1);
+  tree.updateNode(octomap::point3d(0, 0, 0), true);
+  auto map_file = temp_fixture.get_temp_dir() / "test_map.ot";
+  tree.write(map_file.string());
 
   rclcpp::NodeOptions options;
+  options.append_parameter_override("octomap_path", map_file.string());
   auto server = std::make_shared<OctomapServerStatic>(options);
 
   rclcpp::spin_some(server);
