@@ -131,9 +131,7 @@ if(BUILD_TESTING)
 
   ament_clang_tidy(
     CONFIG_FILE ${CMAKE_CURRENT_SOURCE_DIR}/../.clang-tidy
-    ${CMAKE_CURRENT_SOURCE_DIR}/src
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/test
+    ${CMAKE_CURRENT_BINARY_DIR}
   )
 
   # Complementary C++ static analysis
