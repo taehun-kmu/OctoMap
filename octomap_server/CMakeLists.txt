@@ -118,6 +118,11 @@ rclcpp_components_register_node(octomap_saver
 )
 
 if(BUILD_TESTING)
+  # Exclude auto-generated files from linting
+  set(AMENT_LINT_AUTO_FILE_EXCLUDE
+    ${CMAKE_CURRENT_BINARY_DIR}
+  )
+
   # Code quality tools with custom config files
   find_package(ament_cmake_clang_format REQUIRED)
   find_package(ament_cmake_clang_tidy REQUIRED)
@@ -137,7 +142,7 @@ if(BUILD_TESTING)
   # Complementary C++ static analysis
   find_package(ament_cmake_cppcheck REQUIRED)
   ament_cppcheck(
-    EXCLUDE ${CMAKE_CURRENT_BINARY_DIR}
+    EXCLUDE "${CMAKE_CURRENT_BINARY_DIR}/*"
   )
 
   # Python linting (for scripts)
@@ -150,11 +155,9 @@ if(BUILD_TESTING)
   find_package(ament_cmake_xmllint REQUIRED)
 
   ament_copyright(
-    EXCLUDE ${CMAKE_CURRENT_BINARY_DIR}
+    EXCLUDE "${CMAKE_CURRENT_BINARY_DIR}/*"
   )
-  ament_lint_cmake(
-    EXCLUDE ${CMAKE_CURRENT_BINARY_DIR}
-  )
+  ament_lint_cmake()
   ament_xmllint()
 
   # Catch2 test framework
