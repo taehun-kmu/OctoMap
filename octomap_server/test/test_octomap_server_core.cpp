@@ -124,7 +124,7 @@ TEST_CASE("OctomapServer provides octomap services", "[octomap_server][services]
   SECTION("Binary octomap service exists")
   {
     bool found = false;
-    for (const auto& [name, types] : service_names) {
+    for (const auto & [name, types] : service_names) {
       if (name.find("octomap_binary") != std::string::npos) {
         found = true;
         break;
@@ -136,7 +136,7 @@ TEST_CASE("OctomapServer provides octomap services", "[octomap_server][services]
   SECTION("Full octomap service exists")
   {
     bool found = false;
-    for (const auto& [name, types] : service_names) {
+    for (const auto & [name, types] : service_names) {
       if (name.find("octomap_full") != std::string::npos) {
         found = true;
         break;
@@ -148,7 +148,7 @@ TEST_CASE("OctomapServer provides octomap services", "[octomap_server][services]
   SECTION("Reset service exists")
   {
     bool found = false;
-    for (const auto& [name, types] : service_names) {
+    for (const auto & [name, types] : service_names) {
       if (name.find("reset") != std::string::npos) {
         found = true;
         break;
@@ -174,7 +174,7 @@ TEST_CASE("OctomapServer subscribes to point cloud topics", "[octomap_server][to
   auto topic_names = server->get_topic_names_and_types();
 
   bool found_cloud_sub = false;
-  for (const auto& [name, types] : topic_names) {
+  for (const auto & [name, types] : topic_names) {
     if (name.find("cloud_in") != std::string::npos) {
       found_cloud_sub = true;
       break;

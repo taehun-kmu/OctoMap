@@ -204,7 +204,7 @@ TEST_CASE("OctomapServer visualization topics", "[octomap_server][traversal][vis
 
   // Check for occupied cells marker topic
   bool found_occupied = false;
-  for (const auto& [name, types] : topic_names) {
+  for (const auto & [name, types] : topic_names) {
     if (name.find("occupied_cells_vis") != std::string::npos) {
       found_occupied = true;
       break;

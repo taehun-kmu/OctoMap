@@ -60,10 +60,10 @@ public:
   }
 
   // Delete copy/move to enforce single initialization
-  ROS2Fixture(const ROS2Fixture&) = delete;
-  ROS2Fixture& operator=(const ROS2Fixture&) = delete;
-  ROS2Fixture(ROS2Fixture&&) = delete;
-  ROS2Fixture& operator=(ROS2Fixture&&) = delete;
+  ROS2Fixture(const ROS2Fixture &) = delete;
+  ROS2Fixture & operator=(const ROS2Fixture &) = delete;
+  ROS2Fixture(ROS2Fixture &&) = delete;
+  ROS2Fixture & operator=(ROS2Fixture &&) = delete;
 
 private:
   bool initialized_{false};

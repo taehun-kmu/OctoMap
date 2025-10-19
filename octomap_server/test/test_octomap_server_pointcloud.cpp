@@ -58,7 +58,7 @@ TEST_CASE("OctomapServer subscribes to point cloud topic", "[octomap_server][poi
   auto topic_names = server->get_topic_names_and_types();
 
   bool found_cloud_sub = false;
-  for (const auto& [name, types] : topic_names) {
+  for (const auto & [name, types] : topic_names) {
     if (name.find("cloud_in") != std::string::npos) {
       found_cloud_sub = true;
       break;

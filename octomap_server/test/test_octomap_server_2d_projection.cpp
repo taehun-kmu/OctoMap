@@ -182,11 +182,11 @@ TEST_CASE("OctomapServer 2D map topic verification", "[octomap_server][2d_map][t
     auto topic_names = server->get_topic_names_and_types();
 
     bool found_map_topic = false;
-    for (const auto& [name, types] : topic_names) {
+    for (const auto & [name, types] : topic_names) {
       if (name.find("projected_map") != std::string::npos) {
         found_map_topic = true;
         // Verify it's an OccupancyGrid topic
-        for (const auto& type : types) {
+        for (const auto & type : types) {
           if (type == "nav_msgs/msg/OccupancyGrid") {
             CHECK(true);
           }
