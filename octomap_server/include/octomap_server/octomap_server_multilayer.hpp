@@ -93,7 +93,6 @@ private:
 
   // Parameters
   bool use_moveit_attached_objects_;
-  std::string robot_description_;
   std::string planning_scene_topic_;
 
   // Thread safety for arm links access

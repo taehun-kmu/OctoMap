@@ -40,7 +40,6 @@ OctomapServerMultilayer::OctomapServerMultilayer(const rclcpp::NodeOptions & nod
 {
   // Declare parameters
   use_moveit_attached_objects_ = declare_parameter("use_moveit_attached_objects", true);
-  robot_description_ = declare_parameter("robot_description", "robot_description");
   planning_scene_topic_ = declare_parameter("planning_scene", "/planning_scene");
 
   // TODO(someone): param maps, limits
@@ -88,8 +87,9 @@ void OctomapServerMultilayer::initializeMoveIt2()
 
   try {
     // Create PlanningSceneMonitor - NOW safe to use shared_from_this()
+    // Pass parameter NAME (not content) - MoveIt2 will look up the robot_description parameter
     planning_scene_monitor_ = std::make_shared<planning_scene_monitor::PlanningSceneMonitor>(
-      shared_from_this(), robot_description_);
+      shared_from_this(), "robot_description");
 
     // Start monitoring
     planning_scene_monitor_->startSceneMonitor(planning_scene_topic_);
