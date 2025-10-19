@@ -74,7 +74,7 @@ OctomapServerMultilayer::OctomapServerMultilayer(const rclcpp::NodeOptions & nod
   if (use_moveit_attached_objects_) {
     // Schedule initialization after constructor completes (when shared_ptr is established)
     // Using 0ms timer ensures it runs ASAP but after object is fully constructed
-    auto init_timer =
+    init_timer_ =
       create_wall_timer(std::chrono::milliseconds(0), [this]() { this->initializeMoveIt2(); });
   } else {
     // Legacy mode selected by parameter
@@ -113,6 +113,9 @@ void OctomapServerMultilayer::initializeMoveIt2()
     // Fallback to legacy mode
     initializeLegacyArmLinks();
   }
+
+  // Clean up one-shot timer (no longer needed after initialization)
+  init_timer_.reset();
 }
 
 void OctomapServerMultilayer::initializeLegacyArmLinks()

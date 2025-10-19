@@ -89,6 +89,7 @@ private:
   // MoveIt2 integration
   std::shared_ptr<planning_scene_monitor::PlanningSceneMonitor> planning_scene_monitor_;
   rclcpp::Subscription<moveit_msgs::msg::AttachedCollisionObject>::SharedPtr attached_object_sub_;
+  rclcpp::TimerBase::SharedPtr init_timer_;  // One-shot timer for deferred MoveIt2 initialization
 
   // Parameters
   bool use_moveit_attached_objects_;
