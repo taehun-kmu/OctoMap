@@ -44,7 +44,7 @@ using octomap_msgs::srv::GetOctomap;
 class OctomapServerStatic : public rclcpp::Node
 {
 public:
-  explicit OctomapServerStatic(const rclcpp::NodeOptions& node_options);
+  explicit OctomapServerStatic(const rclcpp::NodeOptions & node_options);
 
 private:
   bool onOctomapBinarySrv(

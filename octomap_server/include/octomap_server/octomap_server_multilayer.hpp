@@ -44,7 +44,7 @@ namespace octomap_server
 class OctomapServerMultilayer : public OctomapServer
 {
 public:
-  explicit OctomapServerMultilayer(const rclcpp::NodeOptions& node_options);
+  explicit OctomapServerMultilayer(const rclcpp::NodeOptions & node_options);
 
 protected:
   struct ProjectedMap
@@ -58,13 +58,13 @@ protected:
   using MultilevelGrid = std::vector<ProjectedMap>;
 
   /// hook that is called after traversing all nodes
-  virtual void handlePreNodeTraversal(const rclcpp::Time& rostime);
+  virtual void handlePreNodeTraversal(const rclcpp::Time & rostime);
 
   /// updates the downprojected 2D map as either occupied or free
-  virtual void update2DMap(const OcTreeT::iterator& it, bool occupied);
+  virtual void update2DMap(const OcTreeT::iterator & it, bool occupied);
 
   /// hook that is called after traversing all nodes
-  virtual void handlePostNodeTraversal(const rclcpp::Time& rostime);
+  virtual void handlePostNodeTraversal(const rclcpp::Time & rostime);
 
   /// callback for attached collision objects from MoveIt2
   void attachedObjectCallback(const moveit_msgs::msg::AttachedCollisionObject::ConstSharedPtr msg);

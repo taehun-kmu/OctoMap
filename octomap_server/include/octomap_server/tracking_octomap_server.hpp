@@ -38,11 +38,12 @@ namespace octomap_server
 class TrackingOctomapServer : public OctomapServer
 {
 public:
-  explicit TrackingOctomapServer(const rclcpp::NodeOptions& node_options);
+  explicit TrackingOctomapServer(const rclcpp::NodeOptions & node_options);
 
   void trackCallback(const PointCloud2::ConstSharedPtr cloud);
   void insertScan(
-    const tf2::Vector3& sensor_origin, const PCLPointCloud& ground, const PCLPointCloud& nonground);
+    const tf2::Vector3 & sensor_origin, const PCLPointCloud & ground,
+    const PCLPointCloud & nonground);
 
 protected:
   void trackChanges();
