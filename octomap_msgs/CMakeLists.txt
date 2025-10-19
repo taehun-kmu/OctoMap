@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.8)
 project(octomap_msgs)
 
 # Default to C++17 (required for std::filesystem in tests)
