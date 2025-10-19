@@ -36,12 +36,9 @@
 
 namespace octomap_server
 {
-OctomapServerStatic::OctomapServerStatic(const rclcpp::NodeOptions& node_options)
+OctomapServerStatic::OctomapServerStatic(const rclcpp::NodeOptions & node_options)
 : Node("octomap_server_static", node_options)
 {
-  using std::placeholders::_1;
-  using std::placeholders::_2;
-
   frame_id_ = declare_parameter("frame_id", "map");
   const auto filename = declare_parameter("octomap_path", "");
   if (filename.length() <= 3) {
@@ -60,15 +57,21 @@ OctomapServerStatic::OctomapServerStatic(const rclcpp::NodeOptions& node_options
     }
 
     octree_ = std::unique_ptr<octomap::AbstractOccupancyOcTree>(
-      dynamic_cast<octomap::AbstractOccupancyOcTree*>(tree.release()));
+      dynamic_cast<octomap::AbstractOccupancyOcTree *>(tree.release()));
   } else {
     RCLCPP_ERROR(get_logger(), "Octree file does not have .bt or .ot extension");
     return;
   }
   octomap_binary_srv_ = create_service<GetOctomap>(
-    "octomap_binary", std::bind(&OctomapServerStatic::onOctomapBinarySrv, this, _1, _2));
+    "octomap_binary",
+    [this](
+      const std::shared_ptr<GetOctomap::Request> req,
+      const std::shared_ptr<GetOctomap::Response> res) { return onOctomapBinarySrv(req, res); });
   octomap_full_srv_ = create_service<GetOctomap>(
-    "octomap_full", std::bind(&OctomapServerStatic::onOctomapFullSrv, this, _1, _2));
+    "octomap_full",
+    [this](
+      const std::shared_ptr<GetOctomap::Request> req,
+      const std::shared_ptr<GetOctomap::Response> res) { return onOctomapFullSrv(req, res); });
 }
 
 bool OctomapServerStatic::onOctomapBinarySrv(
@@ -78,10 +81,7 @@ bool OctomapServerStatic::onOctomapBinarySrv(
   RCLCPP_INFO(get_logger(), "Sending binary map data on service request");
   res->map.header.frame_id = frame_id_;
   res->map.header.stamp = now();
-  if (!octomap_msgs::binaryMapToMsg(*octree_, res->map)) {
-    return false;
-  }
-  return true;
+  return octomap_msgs::binaryMapToMsg(*octree_, res->map);
 }
 
 bool OctomapServerStatic::onOctomapFullSrv(
@@ -91,12 +91,7 @@ bool OctomapServerStatic::onOctomapFullSrv(
   RCLCPP_INFO(get_logger(), "Sending full map data on service request");
   res->map.header.frame_id = frame_id_;
   res->map.header.stamp = now();
-
-  if (!octomap_msgs::fullMapToMsg(*octree_, res->map)) {
-    return false;
-  }
-
-  return true;
+  return octomap_msgs::fullMapToMsg(*octree_, res->map);
 }
 }  // namespace octomap_server
 
