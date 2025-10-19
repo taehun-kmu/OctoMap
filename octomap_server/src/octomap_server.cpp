@@ -39,9 +39,9 @@
 namespace
 {
 template <typename T>
-bool update_param(const std::vector<rclcpp::Parameter>& p, const std::string& name, T& value)
+bool update_param(const std::vector<rclcpp::Parameter> & p, const std::string & name, T & value)
 {
-  auto it = std::find_if(p.cbegin(), p.cend(), [&name](const rclcpp::Parameter& parameter) {
+  auto it = std::find_if(p.cbegin(), p.cend(), [&name](const rclcpp::Parameter & parameter) {
     return parameter.get_name() == name;
   });
   if (it != p.cend()) {
@@ -53,7 +53,7 @@ bool update_param(const std::vector<rclcpp::Parameter>& p, const std::string& na
 }  // namespace
 namespace octomap_server
 {
-OctomapServer::OctomapServer(const rclcpp::NodeOptions& node_options)
+OctomapServer::OctomapServer(const rclcpp::NodeOptions & node_options)
 : Node("octomap_server", node_options)
 {
   using std::placeholders::_1;
@@ -328,7 +328,7 @@ OctomapServer::OctomapServer(const rclcpp::NodeOptions& node_options)
   }
 }
 
-bool OctomapServer::openFile(const std::string& filename)
+bool OctomapServer::openFile(const std::string & filename)
 {
   if (filename.length() <= 3) {
     return false;
@@ -344,7 +344,7 @@ bool OctomapServer::openFile(const std::string& filename)
     if (!tree) {
       return false;
     }
-    octree_ = std::unique_ptr<OcTreeT>(dynamic_cast<OcTreeT*>(tree.release()));
+    octree_ = std::unique_ptr<OcTreeT>(dynamic_cast<OcTreeT *>(tree.release()));
     if (!octree_) {
       RCLCPP_ERROR(
         get_logger(),
@@ -400,7 +400,7 @@ void OctomapServer::insertCloudCallback(const PointCloud2::ConstSharedPtr cloud)
     sensor_to_world_transform_stamped = tf2_buffer_->lookupTransform(
       world_frame_id_, cloud->header.frame_id, cloud->header.stamp,
       rclcpp::Duration::from_seconds(1.0));
-  } catch (const tf2::TransformException& ex) {
+  } catch (const tf2::TransformException & ex) {
     RCLCPP_WARN(this->get_logger(), "%s", ex.what());
     return;
   }
@@ -481,7 +481,7 @@ void OctomapServer::insertCloudCallback(const PointCloud2::ConstSharedPtr cloud)
     pc_nonground.header = pc.header;
   }
 
-  const auto& t = sensor_to_world_transform_stamped.transform.translation;
+  const auto & t = sensor_to_world_transform_stamped.transform.translation;
   tf2::Vector3 sensor_to_world_vec3{t.x, t.y, t.z};
   insertScan(sensor_to_world_vec3, pc_ground, pc_nonground);
 
@@ -495,7 +495,8 @@ void OctomapServer::insertCloudCallback(const PointCloud2::ConstSharedPtr cloud)
 }
 
 void OctomapServer::insertScan(
-  const tf2::Vector3& sensor_origin_tf, const PCLPointCloud& ground, const PCLPointCloud& nonground)
+  const tf2::Vector3 & sensor_origin_tf, const PCLPointCloud & ground,
+  const PCLPointCloud & nonground)
 {
   const auto sensor_origin = octomap::pointTfToOctomap(sensor_origin_tf);
 
@@ -620,7 +621,7 @@ void OctomapServer::insertScan(
   }
 }
 
-void OctomapServer::publishAll(const rclcpp::Time& rostime)
+void OctomapServer::publishAll(const rclcpp::Time & rostime)
 {
   const auto start_time = rclcpp::Clock{}.now();
   const size_t octomap_size = octree_->size();
@@ -966,7 +967,7 @@ bool OctomapServer::resetSrv(
   return true;
 }
 
-void OctomapServer::publishBinaryOctoMap(const rclcpp::Time& rostime) const
+void OctomapServer::publishBinaryOctoMap(const rclcpp::Time & rostime) const
 {
   Octomap map;
   map.header.frame_id = world_frame_id_;
@@ -978,7 +979,7 @@ void OctomapServer::publishBinaryOctoMap(const rclcpp::Time& rostime) const
   }
 }
 
-void OctomapServer::publishFullOctoMap(const rclcpp::Time& rostime) const
+void OctomapServer::publishFullOctoMap(const rclcpp::Time & rostime) const
 {
   Octomap map;
   map.header.frame_id = world_frame_id_;
@@ -991,7 +992,7 @@ void OctomapServer::publishFullOctoMap(const rclcpp::Time& rostime) const
 }
 
 void OctomapServer::filterGroundPlane(
-  const PCLPointCloud& pc, PCLPointCloud& ground, PCLPointCloud& nonground) const
+  const PCLPointCloud & pc, PCLPointCloud & ground, PCLPointCloud & nonground) const
 {
   ground.header = pc.header;
   nonground.header = pc.header;
@@ -1099,7 +1100,7 @@ void OctomapServer::filterGroundPlane(
   }
 }
 
-void OctomapServer::handlePreNodeTraversal(const rclcpp::Time& rostime)
+void OctomapServer::handlePreNodeTraversal(const rclcpp::Time & rostime)
 {
   if (publish_2d_map_) {
     // init projected 2D map:
@@ -1238,42 +1239,42 @@ void OctomapServer::handlePreNodeTraversal(const rclcpp::Time& rostime)
   }
 }
 
-void OctomapServer::handlePostNodeTraversal([[maybe_unused]] const rclcpp::Time& rostime)
+void OctomapServer::handlePostNodeTraversal([[maybe_unused]] const rclcpp::Time & rostime)
 {
   if (publish_2d_map_) {
     map_pub_->publish(gridmap_);
   }
 }
 
-void OctomapServer::handleOccupiedNode(const OcTreeT::iterator& it)
+void OctomapServer::handleOccupiedNode(const OcTreeT::iterator & it)
 {
   if (publish_2d_map_ && project_complete_map_) {
     update2DMap(it, true);
   }
 }
 
-void OctomapServer::handleFreeNode(const OcTreeT::iterator& it)
+void OctomapServer::handleFreeNode(const OcTreeT::iterator & it)
 {
   if (publish_2d_map_ && project_complete_map_) {
     update2DMap(it, false);
   }
 }
 
-void OctomapServer::handleOccupiedNodeInBBX(const OcTreeT::iterator& it)
+void OctomapServer::handleOccupiedNodeInBBX(const OcTreeT::iterator & it)
 {
   if (publish_2d_map_ && project_complete_map_) {
     update2DMap(it, true);
   }
 }
 
-void OctomapServer::handleFreeNodeInBBX(const OcTreeT::iterator& it)
+void OctomapServer::handleFreeNodeInBBX(const OcTreeT::iterator & it)
 {
   if (publish_2d_map_ && project_complete_map_) {
     update2DMap(it, false);
   }
 }
 
-void OctomapServer::update2DMap(const OcTreeT::iterator& it, bool occupied)
+void OctomapServer::update2DMap(const OcTreeT::iterator & it, bool occupied)
 {
   // update 2D map (occupied always overrides):
   if (it.getDepth() == max_tree_depth_) {
@@ -1301,7 +1302,7 @@ void OctomapServer::update2DMap(const OcTreeT::iterator& it, bool occupied)
   }
 }
 
-bool OctomapServer::isSpeckleNode(const octomap::OcTreeKey& n_key) const
+bool OctomapServer::isSpeckleNode(const octomap::OcTreeKey & n_key) const
 {
   octomap::OcTreeKey key;
   bool neighbor_found = false;
@@ -1309,7 +1310,7 @@ bool OctomapServer::isSpeckleNode(const octomap::OcTreeKey& n_key) const
     for (key[1] = n_key[1] - 1; !neighbor_found && key[1] <= n_key[1] + 1; ++key[1]) {
       for (key[0] = n_key[0] - 1; !neighbor_found && key[0] <= n_key[0] + 1; ++key[0]) {
         if (key != n_key) {
-          octomap::OcTreeNode* node = octree_->search(key);
+          octomap::OcTreeNode * node = octree_->search(key);
           if (node && octree_->isNodeOccupied(node)) {
             // we have a neighbor=> break!
             neighbor_found = true;
@@ -1323,7 +1324,7 @@ bool OctomapServer::isSpeckleNode(const octomap::OcTreeKey& n_key) const
 }
 
 rcl_interfaces::msg::SetParametersResult OctomapServer::onParameter(
-  const std::vector<rclcpp::Parameter>& parameters)
+  const std::vector<rclcpp::Parameter> & parameters)
 {
   int64_t max_tree_depth{get_parameter("max_depth").as_int()};
   update_param(parameters, "max_depth", max_tree_depth);
@@ -1360,7 +1361,7 @@ rcl_interfaces::msg::SetParametersResult OctomapServer::onParameter(
   return result;
 }
 
-void OctomapServer::adjustMapData(OccupancyGrid& map, const MapMetaData& old_map_info) const
+void OctomapServer::adjustMapData(OccupancyGrid & map, const MapMetaData & old_map_info) const
 {
   if (map.info.resolution != old_map_info.resolution) {
     RCLCPP_ERROR(get_logger(), "Resolution of map changed, cannot be adjusted");

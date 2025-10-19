@@ -35,7 +35,7 @@
 
 namespace octomap_server
 {
-OctomapServerMultilayer::OctomapServerMultilayer(const rclcpp::NodeOptions& node_options)
+OctomapServerMultilayer::OctomapServerMultilayer(const rclcpp::NodeOptions & node_options)
 : OctomapServer(node_options)
 {
   // Declare parameters
@@ -103,7 +103,7 @@ void OctomapServerMultilayer::initializeMoveIt2()
     RCLCPP_INFO(
       get_logger(), "MoveIt2 integration enabled - tracking attached objects from planning scene");
 
-  } catch (const std::exception& ex) {
+  } catch (const std::exception & ex) {
     RCLCPP_ERROR(
       get_logger(), "Failed to initialize MoveIt2 integration: %s. Falling back to legacy mode.",
       ex.what());
@@ -145,7 +145,7 @@ void OctomapServerMultilayer::initializeLegacyArmLinks()
   arm_link_offsets_.push_back(0.05);
 }
 
-void OctomapServerMultilayer::handlePreNodeTraversal(const rclcpp::Time& rostime)
+void OctomapServerMultilayer::handlePreNodeTraversal(const rclcpp::Time & rostime)
 {
   // multilayer server always publishes 2D maps:
   publish_2d_map_ = true;
@@ -189,7 +189,7 @@ void OctomapServerMultilayer::handlePreNodeTraversal(const rclcpp::Time& rostime
           transform_stamped = tf2_buffer_->lookupTransform(
             "base_footprint", arm_links_.at(i), rclcpp::Time(0),
             rclcpp::Duration::from_seconds(1.0));
-        } catch (const tf2::TransformException& ex) {
+        } catch (const tf2::TransformException & ex) {
           RCLCPP_WARN_THROTTLE(
             this->get_logger(), *get_clock(),
             5000,  // 5 seconds
@@ -237,7 +237,7 @@ void OctomapServerMultilayer::handlePreNodeTraversal(const rclcpp::Time& rostime
   }
 }
 
-void OctomapServerMultilayer::handlePostNodeTraversal(const rclcpp::Time& rostime)
+void OctomapServerMultilayer::handlePostNodeTraversal(const rclcpp::Time & rostime)
 {
   // TODO(someone): calc tall / short obs. cells for arm layer, => temp arm layer
   //  std::vector<int> shortObsCells;
@@ -281,7 +281,7 @@ void OctomapServerMultilayer::handlePostNodeTraversal(const rclcpp::Time& rostim
   }
 }
 
-void OctomapServerMultilayer::update2DMap(const OcTreeT::iterator& it, bool occupied)
+void OctomapServerMultilayer::update2DMap(const OcTreeT::iterator & it, bool occupied)
 {
   double z = it.getZ();
   double s2 = it.getSize() / 2.0;
@@ -357,7 +357,7 @@ void OctomapServerMultilayer::attachedObjectCallback(
       double offset = 0.05;  // default
       if (!msg->object.primitives.empty()) {
         // Use first primitive's size
-        const auto& dims = msg->object.primitives[0].dimensions;
+        const auto & dims = msg->object.primitives[0].dimensions;
         if (!dims.empty()) {
           offset = *std::max_element(dims.begin(), dims.end()) / 2.0;
         }
@@ -401,13 +401,13 @@ void OctomapServerMultilayer::updateArmLinksFromAttachedObjects()
     arm_links_.clear();
     arm_link_offsets_.clear();
 
-    for (const auto& obj : attached_objects) {
+    for (const auto & obj : attached_objects) {
       arm_links_.push_back(obj.link_name);
 
       // Calculate offset
       double offset = 0.05;
       if (!obj.object.primitives.empty()) {
-        const auto& dims = obj.object.primitives[0].dimensions;
+        const auto & dims = obj.object.primitives[0].dimensions;
         if (!dims.empty()) {
           offset = *std::max_element(dims.begin(), dims.end()) / 2.0;
         }

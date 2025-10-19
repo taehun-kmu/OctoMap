@@ -45,10 +45,10 @@ using octomap_msgs::srv::GetOctomap;
 class OctomapSaver : public rclcpp::Node
 {
 public:
-  explicit OctomapSaver(const rclcpp::NodeOptions& node_options);
+  explicit OctomapSaver(const rclcpp::NodeOptions & node_options);
 };
 
-OctomapSaver::OctomapSaver(const rclcpp::NodeOptions& node_options)
+OctomapSaver::OctomapSaver(const rclcpp::NodeOptions & node_options)
 : rclcpp::Node("octomap_saver", node_options)
 {
   using std::chrono_literals::operator""s;
@@ -82,7 +82,7 @@ OctomapSaver::OctomapSaver(const rclcpp::NodeOptions& node_options)
     std::unique_ptr<AbstractOccupancyOcTree> octree;
     if (tree) {
       octree = std::unique_ptr<AbstractOccupancyOcTree>(
-        dynamic_cast<AbstractOccupancyOcTree*>(tree.release()));
+        dynamic_cast<AbstractOccupancyOcTree *>(tree.release()));
     } else {
       RCLCPP_ERROR(get_logger(), "Error creating octree from received message");
       RCLCPP_WARN_EXPRESSION(
