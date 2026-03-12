@@ -297,8 +297,11 @@ OctomapServer::OctomapServer(const rclcpp::NodeOptions & node_options)
 
   publish_rate_ = declare_parameter("publish_rate", 1.0);
   if (publish_rate_ > 0.0) {
-    publish_timer_ = create_wall_timer(
-      std::chrono::duration<double>(1.0 / publish_rate_), [this]() { publishAll(this->now()); });
+    publish_timer_ = rclcpp::create_timer(
+      this,
+      get_clock(),
+      std::chrono::duration<double>(1.0 / publish_rate_),
+      [this]() { publishAll(this->now()); });
   }
 
   tf2_buffer_ = std::make_shared<tf2_ros::Buffer>(get_clock());
