@@ -491,6 +491,10 @@ void OctomapServer::insertCloudCallback(const PointCloud2::ConstSharedPtr cloud)
   tf2::Vector3 sensor_to_world_vec3{t.x, t.y, t.z};
   insertScan(sensor_to_world_vec3, pc_ground, pc_nonground);
 
+  if (publish_rate_ <= 0.0) {
+    publishAll(cloud->header.stamp);
+  }
+
   double total_elapsed = (rclcpp::Clock{}.now() - start_time).seconds();
   RCLCPP_DEBUG(
     get_logger(),
