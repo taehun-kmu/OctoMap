@@ -242,6 +242,8 @@ protected:
   rclcpp::Publisher<PointCloud2>::SharedPtr point_cloud_pub_;
   rclcpp::Publisher<OccupancyGrid>::SharedPtr map_pub_;
   rclcpp::Publisher<MarkerArray>::SharedPtr fmarker_pub_;
+  rclcpp::TimerBase::SharedPtr publish_timer_;
+  double publish_rate_;
   message_filters::Subscriber<PointCloud2> point_cloud_sub_;
   std::shared_ptr<tf2_ros::MessageFilter<PointCloud2>> tf_point_cloud_sub_;
   rclcpp::Service<OctomapSrv>::SharedPtr octomap_binary_srv_;
