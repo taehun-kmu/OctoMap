@@ -295,6 +295,12 @@ OctomapServer::OctomapServer(const rclcpp::NodeOptions & node_options)
   map_pub_ = create_publisher<OccupancyGrid>("projected_map", qos.keep_last(5));
   fmarker_pub_ = create_publisher<MarkerArray>("free_cells_vis_array", qos);
 
+  publish_rate_ = declare_parameter("publish_rate", 1.0);
+  if (publish_rate_ > 0.0) {
+    publish_timer_ = create_wall_timer(
+      std::chrono::duration<double>(1.0 / publish_rate_), [this]() { publishAll(this->now()); });
+  }
+
   tf2_buffer_ = std::make_shared<tf2_ros::Buffer>(get_clock());
   auto timer_interface = std::make_shared<tf2_ros::CreateTimerROS>(
     this->get_node_base_interface(), this->get_node_timers_interface());
@@ -490,8 +496,6 @@ void OctomapServer::insertCloudCallback(const PointCloud2::ConstSharedPtr cloud)
     get_logger(),
     "Pointcloud insertion in OctomapServer done (%zu+%zu pts (ground/nonground), %f sec)",
     pc_ground.size(), pc_nonground.size(), total_elapsed);
-
-  publishAll(cloud->header.stamp);
 }
 
 void OctomapServer::insertScan(
